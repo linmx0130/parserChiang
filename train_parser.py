@@ -8,17 +8,15 @@
 import ud_dataloader
 import mxnet as mx
 from mxnet import nd, autograd, gluon
-from config import train_data_fn as train_data
-from config import dev_data_fn
+from config import train_data_fn 
 import config
 from get_trans import cross_check
 import random
 from trans_parser_model import ParserModel
 from utils import * 
 
-
-data = ud_dataloader.parseDocument(train_data)
-#dev_data = ud_dataloader.parseDocument(dev_data_fn)
+init_logging()
+data = ud_dataloader.parseDocument(train_data_fn)
 data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
 words, pos_tag = getWordPos(data)
 word_list = sorted(list(words.keys()))
@@ -26,11 +24,15 @@ word_map = {}
 for i, w in enumerate(word_list):
     word_map[w] = i
 
+logging.info("Train data loaded: {}".format(train_data_fn))
+logging.info("Sentences count = {}".format(len(data)))
+logging.info("Words count = {}".format(len(word_map)))
+
 ctx = mx.gpu(0)
 parserModel = ParserModel(len(word_list), 50, 50)
 parser_params = parserModel.collect_params()
 parser_params.initialize(mx.init.Xavier(), ctx=ctx)
-print("Parser params: ", parser_params)
+logging.info("Parameters initialized: {}".format(str(parser_params)))
 
 zero_const = mx.nd.random_uniform(-0.01, 0.01, shape=(1, 100), ctx=ctx)
 
@@ -122,7 +124,7 @@ for epoch in range(1, 1000+1):
         if seni % config.prompt_inteval == config.prompt_inteval - 1:
             avg_loss /= config.prompt_inteval
             acc = acc_accu / acc_total
-            print("Epoch {} sen {} loss={:.6} train acc={:.6}".format(epoch, seni, avg_loss, acc))
+            logging.info("Epoch {} sen {} loss={:.6} train acc={:.6}".format(epoch, seni, avg_loss, acc))
             avg_loss = 0
             acc_accu = 0
             acc_total = 0
@@ -196,4 +198,4 @@ for epoch in range(1, 1000+1):
         model_acc += (mx.nd.array(model_gt) == mx.nd.array(model_pred)).sum().asscalar()
         total_tags += len(tags)
         model_total_tags += len(model_gt)
-    print("Evaling: Total tag acc = {:.6}, prediction tag acc = {:.6}".format(acc/total_tags, model_acc/model_total_tags))
+    logging.info("Evaling: Total tag acc = {:.6}, prediction tag acc = {:.6}".format(acc/total_tags, model_acc/model_total_tags))
