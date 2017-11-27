@@ -43,7 +43,7 @@ def get_transition_sequence(sentence: UDSentence):
             print("***")
             print("Seq = {}".format(seq))
             print("Stack = {}".format(stack))
-        if len(stack)<=2:
+        if len(stack)<2:
             stack.append(buf[buffer_idx])
             buffer_idx = buffer_idx + 1
             seq.append('SHIFT')

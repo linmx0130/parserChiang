@@ -9,6 +9,7 @@ import ud_dataloader
 import mxnet as mx
 from mxnet import nd, autograd, gluon
 from config import train_data_fn as train_data
+import config
 import random
 
 def getWordPos(data):
@@ -84,6 +85,8 @@ loss = gluon.loss.SoftmaxCrossEntropyLoss()
 for epoch in range(1, 10+1):
     random.shuffle(data)
     avg_loss = 0.0
+    acc_accu = 0.0
+    acc_total = 0
     for i, sen in enumerate(data):
         tokens = mapTokenToId(sen, word_map)
         tokens = mx.nd.array(tokens, ctx)
@@ -91,12 +94,18 @@ for epoch in range(1, 10+1):
         tags = mx.nd.array(tags, ctx)
         with autograd.record():
             outputs = tagger(tokens)
+            pred = outputs.argmax(axis=1)
+            acc_accu += (tags==pred).sum().asscalar()
+            acc_total += outputs.shape[0]
             L = loss(outputs, tags)
             L = L.mean()
             L.backward()
         trainer.step(1)
         avg_loss += L.asscalar()
-        if i % 10 == 0:
-            avg_loss /= 10
-            print("Epoch {} sen {} loss={}".format(epoch, i, avg_loss))
+        if i % config.prompt_inteval == 0:
+            avg_loss /= config.prompt_inteval
+            acc = acc_accu / acc_total
+            print("Epoch {} sen {} loss={} train acc={}".format(epoch, i, avg_loss, acc))
             avg_loss = 0
+            acc_accu = 0
+            acc_total = 0

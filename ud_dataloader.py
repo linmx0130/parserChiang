@@ -4,6 +4,7 @@
 # Data loader of Universal Dependencies dataset.
 # Copyright 2017 Mengxiao Lin <linmx0130@gmail.com>
 #
+import hashlib
 
 class UDToken:
     wid = None
@@ -58,12 +59,10 @@ class UDSentence:
         self.parseLines(lines)
     
     def parseLines(self, lines):
-        assert lines[0].startswith('# sent_id')
-        assert lines[1].startswith('# text')
-        self.sent_id = lines[0].split('=')[1].strip()
-        self.text = lines[1].split('=')[1].strip()
+        lines = [t for t in lines if not t.startswith('#')]
+        # self.sent_id = lines[0].split('=')[1].strip()
+        # self.text = lines[1].split('=')[1].strip()
         self.tokens = [UDToken()]
-        lines = lines[2:]
         try:
             for t in lines:
                 self.tokens.append(UDToken(t))
@@ -72,6 +71,8 @@ class UDSentence:
             self.error_found = True
             return
         self.error_found = False
+        self.text = " ".join([t.form for t in self.tokens])
+        self.sent_id = hashlib.sha1(self.text.encode()).hexdigest()
 
     def __len__(self):
         return len(self.tokens)
