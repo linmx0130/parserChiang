@@ -122,7 +122,7 @@ for epoch in range(1, 1000+1):
         if seni % config.prompt_inteval == config.prompt_inteval - 1:
             avg_loss /= config.prompt_inteval
             acc = acc_accu / acc_total
-            print("Epoch {} sen {} loss={} train acc={}".format(epoch, seni, avg_loss, acc))
+            print("Epoch {} sen {} loss={:.6} train acc={:.6}".format(epoch, seni, avg_loss, acc))
             avg_loss = 0
             acc_accu = 0
             acc_total = 0
@@ -130,6 +130,8 @@ for epoch in range(1, 1000+1):
     # eval
     acc = 0
     total_tags = 0
+    model_acc = 0
+    model_total_tags = 0
     for seni, sen in enumerate(data):
         tokens_cpu = mapTokenToId(sen, word_map)
         tokens = mx.nd.array(tokens_cpu, ctx)
@@ -172,8 +174,10 @@ for epoch in range(1, 1000+1):
                 fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[0]*fn[1], fn[0]*fn[2], fn[1]*fn[2], dim=0).reshape((1, -1))
                 output = parserModel.trans_pred(fn)
                 pred.append(output[0].argmax(axis=0).asscalar())
+                model_gt.append(tags[current_idx])
+                model_pred.append(output[0].argmax(axis=0).asscalar())
+
                 current_tag = tags[current_idx]
-     
                 # Work as parser
                 if current_tag == 0: #SHIFT
                     stack.append(buf_idx)
@@ -189,5 +193,7 @@ for epoch in range(1, 1000+1):
                 current_idx += 1
             assert current_idx == len(tags)
         acc += (mx.nd.array(pred) == mx.nd.array(tags)).sum().asscalar()
+        model_acc += (mx.nd.array(model_gt) == mx.nd.array(model_pred)).sum().asscalar()
         total_tags += len(tags)
-    print("Evaling: Train acc = {}".format(acc/total_tags))
+        model_total_tags += len(model_gt)
+    print("Evaling: Total tag acc = {:.6}, prediction tag acc = {:.6}".format(acc/total_tags, model_acc/model_total_tags))
