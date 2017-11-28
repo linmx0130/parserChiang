@@ -36,7 +36,7 @@ logging.info("Parameters initialized: {}".format(str(parser_params)))
 
 zero_const = mx.nd.random_uniform(-0.01, 0.01, shape=(1, 100), ctx=ctx)
 
-trainer = gluon.Trainer(parser_params, 'adam', {'learning_rate': 0.005, 'wd':1e-8})
+trainer = gluon.Trainer(parser_params, 'adam', {'learning_rate': 0.005, 'wd':1e-6})
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 
@@ -159,7 +159,6 @@ for epoch in range(1, 1000+1):
                        stack.append(buf_idx)
                        buf_idx = buf_idx + 1
                        pred.append(0)
-                       assert tags[current_idx] == 0
                        current_idx += 1
                        continue
                    fn = [f[stack[-1]], f[stack[-2]]]
@@ -178,11 +177,17 @@ for epoch in range(1, 1000+1):
                 #fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[0]*fn[1], fn[0]*fn[2], fn[1]*fn[2], dim=1)
                 fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[0]*fn[1], fn[0]*fn[2], fn[1]*fn[2], dim=0).reshape((1, -1))
                 output = parserModel.trans_pred(fn)
-                pred.append(output[0].argmax(axis=0).asscalar())
-                model_gt.append(tags[current_idx])
-                model_pred.append(output[0].argmax(axis=0).asscalar())
+                
+                if buf_idx == len(tokens_cpu):
+                    pred_action = output[0][1:].argmax(axis=0).asscalar() + 1
+                else:
+                    pred_action = output[0].argmax(axis=0).asscalar()
 
-                current_tag = tags[current_idx]
+                pred.append(pred_action)
+                model_gt.append(tags[current_idx])
+                model_pred.append(pred_action)
+
+                current_tag = pred_action
                 # Work as parser
                 if current_tag == 0: #SHIFT
                     stack.append(buf_idx)
@@ -205,4 +210,6 @@ for epoch in range(1, 1000+1):
         heads_pred = reconstrut_tree_with_transition_labels(sen, pred)
         uas += (mx.nd.array(heads_gt) == mx.nd.array(heads_pred)).sum().asscalar() -1 # remove root
         total_tokens += len(heads_gt) -1 
+        #print("GT: ", heads_gt)
+        #print("PD: ", heads_pred)
     logging.info("Evaling: Total tag acc = {:.6}, prediction tag acc = {:.6}, UAS={:.6}".format(acc/total_tags, model_acc/model_total_tags, uas/total_tokens))
