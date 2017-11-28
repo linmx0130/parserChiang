@@ -130,10 +130,13 @@ for epoch in range(1, 1000+1):
             acc_total = 0
     
     # eval
+    print("Evaluating...")
     acc = 0
     total_tags = 0
     model_acc = 0
     model_total_tags = 0
+    uas = 0
+    total_tokens = 0
     for seni, sen in enumerate(data):
         tokens_cpu = mapTokenToId(sen, word_map)
         tokens = mx.nd.array(tokens_cpu, ctx)
@@ -198,4 +201,8 @@ for epoch in range(1, 1000+1):
         model_acc += (mx.nd.array(model_gt) == mx.nd.array(model_pred)).sum().asscalar()
         total_tags += len(tags)
         model_total_tags += len(model_gt)
-    logging.info("Evaling: Total tag acc = {:.6}, prediction tag acc = {:.6}".format(acc/total_tags, model_acc/model_total_tags))
+        heads_gt = [t.head for t in sen.tokens]
+        heads_pred = reconstrut_tree_with_transition_labels(sen, pred)
+        uas += (mx.nd.array(heads_gt) == mx.nd.array(heads_pred)).sum().asscalar() -1 # remove root
+        total_tokens += len(heads_gt) -1 
+    logging.info("Evaling: Total tag acc = {:.6}, prediction tag acc = {:.6}, UAS={:.6}".format(acc/total_tags, model_acc/model_total_tags, uas/total_tokens))

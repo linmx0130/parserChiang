@@ -58,3 +58,45 @@ def init_logging():
     console.setLevel(logging.INFO)
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
+
+def reconstrut_tree_with_transition_labels(sen: ud_dataloader, trans):
+    assert trans[0] == config.PARSER_TAGS_MAP['SHIFT']
+    buf = sen.tokens
+    stack = [0]
+    buf_idx = 1
+    heads = [-1] * len(buf)
+
+    for item in trans[1:]:
+        item = int(item)
+        if config.PARSER_TAGS[item] == 'SHIFT':
+            stack.append(buf_idx)
+            buf_idx = buf_idx + 1
+        elif config.PARSER_TAGS[item] == 'LEFT-ARC':
+            if len(stack) > 0:
+                s2 = stack.pop()
+            else:
+                s2 = len(heads) + 10
+            if len(stack) > 0:
+                s1 = stack.pop()
+            else:
+                s1 = len(heads) + 10
+            if (s1 < len(heads)):
+                heads[s1] = s2
+            stack.append(s2)
+
+        elif config.PARSER_TAGS[item] == 'RIGHT-ARC':
+            if len(stack) > 0:
+                s2 = stack.pop()
+            else:
+                s2 = len(heads) + 10
+            if len(stack) > 0:
+                s1 = stack.pop()
+            else:
+                s1 = len(heads) + 10
+
+            if (s2 < len(heads)):
+                heads[s2] = s1
+            stack.append(s1)
+        else:
+            raise RuntimeError('Unrecongized label!')
+    return heads

@@ -13,7 +13,7 @@ class UDToken:
     pos_tag = None
     x_pos_tag = None
     feats = None
-    head = None
+    head = -1
     deprel = None
     deps = None
     misc = None
