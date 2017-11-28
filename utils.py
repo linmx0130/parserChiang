@@ -16,7 +16,6 @@ def getWordPos(data):
     pos_tag = set()
     for sen in data:
         for token in sen.tokens:
-            token.form = token.form.lower()
             w = token.form
             t = token.pos_tag
             if not w in words:
@@ -41,12 +40,13 @@ def mapTransTagToId(sen: ud_dataloader.UDSentence):
         ret.append(config.PARSER_TAGS_MAP[item])
     return ret
 
-def init_logging():
+def init_logging(phase):
     current_time = time.localtime()
     fmt = "[%(levelname)s] %(message)s"
     logging.basicConfig(
             format=fmt,
-            filename='train_parser_{}{:02}{:02}_{:02}{:02}{:02}.log'.format(
+            filename='{}_parser_{}{:02}{:02}_{:02}{:02}{:02}.log'.format(
+                phase,
                 current_time.tm_year,
                 current_time.tm_mon,
                 current_time.tm_mday,
@@ -58,6 +58,7 @@ def init_logging():
     console.setLevel(logging.INFO)
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
+    return current_time
 
 def reconstrut_tree_with_transition_labels(sen: ud_dataloader, trans):
     assert trans[0] == config.PARSER_TAGS_MAP['SHIFT']
