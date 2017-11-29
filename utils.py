@@ -30,7 +30,10 @@ def getWordPos(data):
 def mapTokenToId(sen: ud_dataloader.UDSentence, word_map:dict):
     ret = []
     for item in sen.tokens:
-        ret.append(word_map[item.form])
+        if item.form in word_map:
+            ret.append(word_map[item.form])
+        else:
+            ret.append(word_map[config.UNKNOW_TOKEN])
     return ret
 
 def mapTransTagToId(sen: ud_dataloader.UDSentence):

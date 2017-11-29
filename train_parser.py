@@ -32,12 +32,12 @@ if not os.path.exists(model_dump_path):
 
 data = ud_dataloader.parseDocument(train_data_fn)
 data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
-data = data[:1000]
 # data lowerize
 for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
 words, pos_tag = getWordPos(data)
+words[config.UNKNOW_TOKEN] = 0
 word_list = sorted(list(words.keys()))
 word_map = {}
 for i, w in enumerate(word_list):
@@ -95,11 +95,10 @@ for epoch in range(1, 1000+1):
                         current_idx += 1
                         continue
                     fn = [f[stack[-1]], f[stack[-2]]]
-                    for i in range(3):
-                        if buf_idx < len(tokens_cpu):
-                            fn.append(f[buf_idx])
-                        else:
-                            fn.append(zero_const)
+                    if buf_idx < len(tokens_cpu):
+                        fn.append(f[buf_idx])
+                    else:
+                        fn.append(zero_const)
                 else:
                     fn = [f[stack[-1]], ]
                     if len(stack) >= 2:

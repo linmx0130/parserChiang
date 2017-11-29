@@ -35,9 +35,9 @@ def get_transition_sequence(sentence: UDSentence):
     if not cross_check(buf):
         raise RuntimeError("Cross check failed!")
 
-    seq = ['SHIFT', 'SHIFT', 'SHIFT']
-    stack = buf[:3]
-    buffer_idx = 3
+    seq = ['SHIFT', 'SHIFT']
+    stack = buf[:2]
+    buffer_idx = 2
     while buffer_idx < len(buf):
         if DEBUG_MODE:
             print("***")
