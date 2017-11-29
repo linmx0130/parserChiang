@@ -1,4 +1,4 @@
-parserChiang - Naïve Transition-based Dependencies Parser in Gluon
+parserChiang - Naïve Transition-based Dependency Parser in Gluon
 =====
 This repo support CoNLL format, which is adapted by [Universal Dependencies](http://universaldependencies.org/) Project. parserChiang is implemented with great [MXNet gluon](http://gluon.mxnet.io/).
 
