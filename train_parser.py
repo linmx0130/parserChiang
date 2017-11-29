@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # 
 # train_parser.py
-# A basic LSTM transition-based parser.
+# A basic LSTM transition-based parser. Training code.
 # Copyright 2017 Mengxiao Lin <linmx0130@gmail.com>
 #
 
@@ -59,7 +59,7 @@ logging.info("Parameters initialized: {}".format(str(parser_params)))
 
 zero_const = mx.nd.zeros(shape=(1, 100), ctx=ctx)
 
-trainer = gluon.Trainer(parser_params, 'adam', {'learning_rate': 0.005, 'wd':1e-6})
+trainer = gluon.Trainer(parser_params, 'adam', {'learning_rate': 0.01, 'wd':1e-4})
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 for epoch in range(1, 1000+1):
@@ -67,7 +67,7 @@ for epoch in range(1, 1000+1):
     avg_loss = 0.0
     acc_accu = 0.0
     acc_total = 0
-    
+    L = mx.nd.zeros(1, ctx=ctx) 
     #training 
     for seni, sen in enumerate(data):
         tokens_cpu = mapTokenToId(sen, word_map)
@@ -131,13 +131,14 @@ for epoch in range(1, 1000+1):
             assert current_idx == len(tags)
             # get loss
             model_gt = mx.nd.array(model_gt, ctx=ctx)
-            L = loss(model_output[0], model_gt[0])
-            for i in range(1, len(model_output)):
+            for i in range(0, len(model_output)):
                 out = model_output[i]
                 gt = model_gt[i]
                 L = L + loss(out, gt)
-        L.backward()
-        trainer.step(1)
+        if (seni + 1) % config.UPDATE_STEP == 0:
+            L.backward()
+            trainer.step(1)
+            L = mx.nd.zeros(1, ctx=ctx) 
         
         acc_accu += (mx.nd.array(model_gt)==mx.nd.array(model_pred)).sum().asscalar()
         acc_total += len(model_pred)

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # 
 # test_parser.py
-# A basic LSTM transition-based parser.
+# A basic LSTM transition-based parser. Testing code.
 # Copyright 2017 Mengxiao Lin <linmx0130@gmail.com>
 #
 import ud_dataloader
