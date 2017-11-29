@@ -13,7 +13,7 @@ $ python3 test_parser.py [model_path] [model_file]
 </pre>
 
 ### Notes
-This implementation is a **low**-performance transition parser in both training speed and predicition accuracy. I created it as a toy model simply for learning natural language processing. **DO NOT USE IT IN REAL WORLD TASK**. 
+This implementation is a **low**-performance transition parser in both training speed and predicition accuracy. I created it as a toy model simply for learning natural language processing. **DO NOT USE IT IN ANY REAL WORLD TASKS**. 
 
 Have fun with it!
 
