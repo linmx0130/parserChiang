@@ -24,8 +24,8 @@ class ParserModel(gluon.Block):
         super(ParserModel, self).__init__(**kwargs)
         with self.name_scope():
             self.embed = gluon.nn.Embedding(vocab_size, num_embed, weight_initializer=mx.init.Uniform(0.01))
-            self.dropout = gluon.nn.Dropout(0.5)
-            self.lstm = gluon.rnn.LSTM(num_hidden, 1, bidirectional=True, input_size=num_embed)
+            self.dropout = gluon.nn.Dropout(0.2)
+            self.lstm = gluon.rnn.LSTM(num_hidden, 2, bidirectional=True, input_size=num_embed)
             self.trans_pred= TransPredModel(3, num_hidden * 2*6, 20)
         self.num_hidden = num_embed
 
@@ -35,7 +35,7 @@ class ParserModel(gluon.Block):
         embed = embed.reshape((s1, 1, s2))
         hidden = self.lstm(embed)
         batch_size, __, hn_size = hidden.shape
-        hidden.reshape((batch_size, hn_size))
+        hidden = hidden.reshape((batch_size, hn_size))
         return hidden
     
     def begin_state(self, *args, **kwargs):

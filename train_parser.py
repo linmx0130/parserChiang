@@ -57,7 +57,7 @@ parser_params = parserModel.collect_params()
 parser_params.initialize(mx.init.Xavier(), ctx=ctx)
 logging.info("Parameters initialized: {}".format(str(parser_params)))
 
-zero_const = mx.nd.zeros(shape=(1, 100), ctx=ctx)
+zero_const = mx.nd.zeros(shape=100, ctx=ctx)
 
 trainer = gluon.Trainer(parser_params, 'adam', {'learning_rate': 0.01, 'wd':1e-4})
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
