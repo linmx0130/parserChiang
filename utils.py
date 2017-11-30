@@ -36,6 +36,13 @@ def mapTokenToId(sen: ud_dataloader.UDSentence, word_map:dict):
             ret.append(word_map[config.UNKNOW_TOKEN])
     return ret
 
+def mapPosTagToId(sen: ud_dataloader.UDSentence, tag_map:dict):
+    ret = []
+    for item in sen.tokens:
+        if item.pos_tag in tag_map:
+            ret.append(tag_map[item.pos_tag])
+    return ret
+
 def mapTransTagToId(sen: ud_dataloader.UDSentence):
     ret = []
     trans = get_transition_sequence(sen)
