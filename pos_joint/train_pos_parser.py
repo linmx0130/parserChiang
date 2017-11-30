@@ -5,11 +5,11 @@
 # Copyright 2017 Mengxiao Lin <linmx0130@gmail.com>
 #
 
+import config
 import ud_dataloader
 import mxnet as mx
 from mxnet import nd, autograd, gluon
 from config import train_data_fn 
-import config
 from get_trans import cross_check
 import random
 from trans_parser_pos_model import ParserModel
@@ -57,12 +57,12 @@ logging.info("Words count = {}".format(len(word_map)))
 logging.info("POS Tag count = {}".format(len(word_map)))
 
 ctx = mx.gpu(0)
-parserModel = ParserModel(len(word_list), 50, 50, len(pos_list), 20)
+parserModel = ParserModel(len(word_list), config.NUM_EMBED, config.NUM_HIDDEN, len(pos_list), config.TAG_EMBED)
 parser_params = parserModel.collect_params()
 parser_params.initialize(mx.init.Xavier(), ctx=ctx)
 logging.info("Parameters initialized: {}".format(str(parser_params)))
 
-zero_const = mx.nd.zeros(shape=100+20, ctx=ctx)
+zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN*2+config.TAG_EMBED, ctx=ctx)
 
 trainer = gluon.Trainer(parser_params, 'adam', {'learning_rate': 0.01, 'wd':1e-4})
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
