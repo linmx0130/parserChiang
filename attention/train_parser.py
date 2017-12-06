@@ -95,6 +95,10 @@ for epoch in range(1, 1000+1):
                         current_idx += 1
                         continue
                     fn = [f[stack[-1]], f[stack[-2]]]
+                    if len(stack) >=3:
+                        fn.append(f[stack[-3]])
+                    else:
+                        fn.append(zero_const)
                     if buf_idx < len(tokens_cpu):
                         fn.append(f[buf_idx])
                     else:
@@ -105,9 +109,12 @@ for epoch in range(1, 1000+1):
                         fn.append(f[stack[-2]])
                     else:
                         fn.append(zero_const)
+                    if len(stack) >= 3:
+                        fn.append(f[stack[-3]])
+                    else:
+                        fn.append(zero_const)
                     fn.append(zero_const)
-                #fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[0]*fn[1], fn[0]*fn[2], fn[1]*fn[2], dim=1)
-                fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[0]*fn[1], fn[0]*fn[2], fn[1]*fn[2], dim=0).reshape((1, -1))
+                fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[3], dim=0).reshape((1, -1))
                 output = parserModel.trans_pred(fn)
                 pred.append(output[0].argmax(axis=0).asscalar())
                 current_tag = tags[current_idx]

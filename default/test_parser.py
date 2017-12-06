@@ -4,14 +4,14 @@
 # A basic LSTM transition-based parser. Testing code.
 # Copyright 2017 Mengxiao Lin <linmx0130@gmail.com>
 #
+import config
 import ud_dataloader
 import mxnet as mx
 from mxnet import nd, autograd, gluon
 from config import dev_data_fn 
-import config
 from get_trans import cross_check
 import pickle
-from trans_parser_model import ParserModel
+from test_parser_model import ParserModel
 from utils import * 
 import os
 import argparse
@@ -85,6 +85,10 @@ for seni in tqdm(range(len(data))):
                     current_idx += 1
                     continue
                 fn = [f[stack[-1]], f[stack[-2]]]
+                if len(stack) >=3:
+                    fn.append(f[stack[-3]])
+                else:
+                    fn.append(zero_const)
                 if buf_idx < len(tokens_cpu):
                     fn.append(f[buf_idx])
                 else:
@@ -95,9 +99,12 @@ for seni in tqdm(range(len(data))):
                     fn.append(f[stack[-2]])
                 else:
                     fn.append(zero_const)
+                if len(stack) >= 3:
+                    fn.append(f[stack[-3]])
+                else:
+                    fn.append(zero_const)
                 fn.append(zero_const)
-            #fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[0]*fn[1], fn[0]*fn[2], fn[1]*fn[2], dim=1)
-            fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[0]*fn[1], fn[0]*fn[2], fn[1]*fn[2], dim=0).reshape((1, -1))
+            fn = mx.nd.concat(fn[0], fn[1], fn[2], fn[3], dim=0).reshape((1, -1))
             output = parserModel.trans_pred(fn)
             
             if buf_idx == len(tokens_cpu):

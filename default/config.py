@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 train_data_fn = 'data/train.conll'
 dev_data_fn = 'data/dev.conll'
 prompt_inteval = 20
