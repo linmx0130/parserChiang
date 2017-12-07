@@ -11,7 +11,7 @@ from mxnet import nd, autograd, gluon
 from config import dev_data_fn 
 from get_trans import cross_check
 import pickle
-from test_parser_model import ParserModel
+from trans_parser_model import ParserModel
 from utils import * 
 import os
 import argparse
