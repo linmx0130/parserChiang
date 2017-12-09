@@ -52,14 +52,14 @@ logging.info("Sentences count = {}".format(len(data)))
 logging.info("Words count = {}".format(len(word_map)))
 
 ctx = mx.gpu(0)
-parserModel = ParserModel(len(word_list), 50, 50)
+parserModel = ParserModel(len(word_list), config.NUM_EMBED, config.NUM_HIDDEN)
 parser_params = parserModel.collect_params()
 parser_params.initialize(mx.init.Xavier(), ctx=ctx)
 logging.info("Parameters initialized: {}".format(str(parser_params)))
 
 zero_const = mx.nd.zeros(shape=100, ctx=ctx)
 
-trainer = gluon.Trainer(parser_params, 'adam', {'learning_rate': 0.01, 'wd':1e-4})
+trainer = gluon.Trainer(parser_params, 'adagrad', {'learning_rate': 0.01, 'wd':1e-4})
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 for epoch in range(1, 1000+1):

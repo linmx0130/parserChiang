@@ -32,7 +32,7 @@ class ParserModel(gluon.Block):
             self.tag_cls = gluon.nn.Dense(tag_count, in_units=num_hidden*2)
             # Parser
             self.lstm_parse = gluon.rnn.LSTM(num_hidden, 1, bidirectional=True, input_size=num_embed)
-            self.trans_pred= TransPredModel(3, (num_hidden*2 + tag_embed_size) *6, 20)
+            self.trans_pred= TransPredModel(3, (num_hidden*2 + tag_embed_size) *6, 200)
         self.num_hidden = num_embed
 
     def forward(self, inputs_word):

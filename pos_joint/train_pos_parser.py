@@ -64,7 +64,7 @@ logging.info("Parameters initialized: {}".format(str(parser_params)))
 
 zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN*2+config.TAG_EMBED, ctx=ctx)
 
-trainer = gluon.Trainer(parser_params, 'adam', {'learning_rate': 0.01, 'wd':1e-4})
+trainer = gluon.Trainer(parser_params, 'adagrad', {'learning_rate': 0.04, 'wd':1e-4})
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 for epoch in range(1, 1000+1):

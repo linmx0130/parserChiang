@@ -44,8 +44,8 @@ class ParserModel(gluon.Block):
             self.dropout = gluon.nn.Dropout(0.2)
             self.lstm1 = gluon.rnn.LSTM(num_hidden, 1, bidirectional=True, input_size=num_embed)
             self.atten = SelfAttentionBlock(num_hidden * 2, num_hidden)
-            self.lstm2 = gluon.rnn.LSTM(num_hidden, 1, bidirectional=True, input_size=num_hidden *2)
-            self.trans_pred= TransPredModel(3, num_hidden * 2 * 4, 20)
+            self.lstm2 = gluon.rnn.LSTM(num_hidden, 1, bidirectional=True, input_size=num_hidden*2)
+            self.trans_pred= TransPredModel(3, num_hidden * 2 * 4, 200)
         self.num_hidden = num_embed
 
     def forward(self, inputs):
@@ -57,6 +57,7 @@ class ParserModel(gluon.Block):
         hidden = hidden.reshape((batch_size, hn_size))
 
         hidden = self.atten(hidden)
+        batch_size, hn_size = hidden.shape
 
         hidden = hidden.reshape((batch_size, 1, hn_size))
         hidden = self.lstm2(hidden)
