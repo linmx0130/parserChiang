@@ -36,23 +36,28 @@ data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
 for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
-words, pos_tag = getWordPos(data)
+words, pos_list = getWordPos(data)
 words[config.UNKNOW_TOKEN] = 0
 word_list = sorted(list(words.keys()))
 word_map = {}
 for i, w in enumerate(word_list):
     word_map[w] = i
+pos_map = {}
+for i, w in enumerate(pos_list):
+    pos_map[w] = i
 
 with open(os.path.join(model_dump_path, 'word_map.pkl'),'wb') as f:
     pickle.dump(word_map, f)
+    pickle.dump(pos_map, f)
 
 logging.info("Dumped word map to word_map.pkl")
 logging.info("Train data loaded: {}".format(train_data_fn))
 logging.info("Sentences count = {}".format(len(data)))
 logging.info("Words count = {}".format(len(word_map)))
+logging.info("POS count = {}".format(len(pos_list)))
 
 ctx = mx.gpu(0)
-parserModel = ParserModel(len(word_list), config.EMBED_SIZE, config.NUM_HIDDEN)
+parserModel = ParserModel(len(word_list), len(pos_list), config.EMBED_SIZE, config.POS_EMBED_SIZE, config.NUM_HIDDEN)
 parser_params = parserModel.collect_params()
 parser_params.initialize(mx.init.Xavier(), ctx=ctx)
 logging.info("Parameters initialized: {}".format(str(parser_params)))
@@ -71,7 +76,9 @@ for epoch in range(1, 1000+1):
     #training 
     for seni, sen in enumerate(data):
         tokens_cpu = mapTokenToId(sen, word_map)
+        pos_tags_cpu = mapPosTagToId(sen, pos_map)
         tokens = mx.nd.array(tokens_cpu, ctx)
+        pos_tags = mx.nd.array(pos_tags_cpu, ctx)
         tags = mapTransTagToId(sen)
         
         model_output = []
@@ -83,7 +90,7 @@ for epoch in range(1, 1000+1):
         current_idx = 0
 
         with autograd.record():
-            f = parserModel(tokens)
+            f = parserModel(tokens, pos_tags)
             # parse by transition
             while buf_idx < len(tokens_cpu) or len(stack) > 1:
                 if buf_idx < len(tokens_cpu):
