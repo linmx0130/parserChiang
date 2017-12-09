@@ -135,15 +135,16 @@ for seni in tqdm(range(len(data))):
                 stack.append(s1)
             current_idx += 1
         assert current_idx == len(tags)
-    heads_gt = [t.head for t in sen.tokens]
+    
+    # Get UAS, ignore punctuation
     heads_pred = reconstrut_tree_with_transition_labels(sen, pred)
-    uas += (mx.nd.array(heads_gt) == mx.nd.array(heads_pred)).sum().asscalar() -1 # remove root
+    uas += getUAS(heads_pred, sen, config.PUNC_POS_TAG)
     
     acc += (mx.nd.array(pred) == mx.nd.array(tags)).sum().asscalar()
     model_acc += (mx.nd.array(model_gt) == mx.nd.array(model_pred)).sum().asscalar()
     total_tags += len(tags)
     model_total_tags += len(model_gt)
-    total_tokens += len(heads_gt) -1 
+    total_tokens += len(heads_pred) -1 
     #print("GT: ", heads_gt)
     #print("PD: ", heads_pred)
 

@@ -60,7 +60,7 @@ ctx = mx.gpu(0)
 parserModel = ParserModel(len(word_list), len(pos_list), config.EMBED_SIZE, config.POS_EMBED_SIZE, config.NUM_HIDDEN)
 parser_params = parserModel.collect_params()
 parser_params.initialize(mx.init.Xavier(), ctx=ctx)
-logging.info("Parameters initialized: {}".format(str(parser_params)))
+#logging.info("Parameters initialized: {}".format(str(parser_params)))
 
 zero_const = mx.nd.zeros(shape=100, ctx=ctx)
 

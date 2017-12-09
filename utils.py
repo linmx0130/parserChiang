@@ -10,6 +10,7 @@ import config
 from get_trans import get_transition_sequence, cross_check
 import logging
 import time
+import numpy as np
 
 def getWordPos(data):
     words = {}
@@ -111,3 +112,18 @@ def reconstrut_tree_with_transition_labels(sen: ud_dataloader, trans):
         else:
             raise RuntimeError('Unrecongized label!')
     return heads
+
+def getUAS(heads_pred, sen, punctuation_tag=None):
+    """
+    calculating UAS.
+
+    Arguments:
+        heads_pred: head label predicted with reconstrut_tree_with_transition_labels
+        sen: sentence object
+        punctuation_tag: punctuation POS tag. Do not ignore punctuation if it is None.
+    """
+    heads_gt = [t.head for t in sen.tokens]
+    punc = np.array([t.pos_tag != punctuation_tag for t in sen.tokens])
+    heads_gt = np.array(heads_gt) * punc
+    heads_pred = np.array(heads_pred) * punc
+    return (heads_pred == heads_gt).sum() - 1 # remove root
