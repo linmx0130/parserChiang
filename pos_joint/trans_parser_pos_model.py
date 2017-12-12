@@ -28,11 +28,11 @@ class ParserModel(gluon.Block):
             self.dropout = gluon.nn.Dropout(0.2)
             self.tag_embed = gluon.nn.Embedding(tag_count, tag_embed_size, weight_initializer=mx.init.Uniform(0.01))
             # POS tagger
-            self.lstm_tag = gluon.rnn.LSTM(num_hidden, 1, bidirectional=True, input_size=num_embed)
+            self.lstm_tag = gluon.rnn.LSTM(num_hidden, 2, bidirectional=True, input_size=num_embed)
             self.tag_cls = gluon.nn.Dense(tag_count, in_units=num_hidden*2)
             # Parser
-            self.lstm_parse = gluon.rnn.LSTM(num_hidden, 1, bidirectional=True, input_size=num_embed)
-            self.trans_pred= TransPredModel(3, (num_hidden*2 + tag_embed_size) *6, 100)
+            self.lstm_parse = gluon.rnn.LSTM(num_hidden, 2, bidirectional=True, input_size=num_embed+tag_embed_size)
+            self.trans_pred= TransPredModel(3, num_hidden * 2 * 4, 100)
         self.num_hidden = num_embed
 
     def forward(self, inputs_word):
@@ -48,10 +48,13 @@ class ParserModel(gluon.Block):
             tag_pred = mx.nd.argmax(tag_f, axis=1)
         tag_embed = self.tag_embed(tag_pred)
         
+        ts1, ts2 = tag_embed.shape
+        tag_embed = tag_embed.reshape((ts1, 1, ts2))
+        embed = mx.nd.concat(embed, tag_embed, dim=2)
+
         hidden = self.lstm_parse(embed)
         batch_size, __, hn_size = hidden.shape
         hidden = hidden.reshape((batch_size, hn_size))
-        hidden = mx.nd.concat(hidden, tag_embed, dim=1)
         
         return hidden, tag_f
     
