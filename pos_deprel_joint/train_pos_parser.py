@@ -91,8 +91,6 @@ for epoch in range(1, 1000+1):
         pos_tag_cpu = mapPosTagToId(sen, pos_map)
         pos_tag = mx.nd.array(pos_tag_cpu, ctx)
         deprel_tag_cpu = mapDeprelTagToId(sen, deprel_map)
-        from IPython import embed; embed()
-        exit(1)
         deprel_tag = mx.nd.array(deprel_tag_cpu, ctx)
         head_of_tokens = [t.head for t in sen.tokens]
         tags = mapTransTagToId(sen)
