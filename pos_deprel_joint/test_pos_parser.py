@@ -39,14 +39,16 @@ for sen in data:
 with open(os.path.join(model_dump_path, 'word_map.pkl'), 'rb') as f:
     word_map = pickle.load(f)
     pos_map = pickle.load(f)
+    deprel_map = pickle.load(f)
 
 logging.info("Test data loaded: {}".format(dev_data_fn))
 logging.info("Sentences count = {}".format(len(data)))
 logging.info("Words count = {}".format(len(word_map)))
 logging.info("POS Tag count = {}".format(len(pos_map)))
+logging.info("Dependent Relation count = {}".format(len(deprel_map)))
 
 ctx = mx.gpu(0)
-parserModel = ParserModel(len(word_map), config.NUM_EMBED, config.NUM_HIDDEN, len(pos_map), config.TAG_EMBED)
+parserModel = ParserModel(len(word_map), config.NUM_EMBED, config.NUM_HIDDEN, len(pos_map), config.TAG_EMBED, len(deprel_map))
 model_file = os.path.join(model_dump_path, args.model_file)
 parserModel.load_params(model_file, ctx=ctx)
 logging.info("Model loaded: {}".format(model_file))
@@ -60,6 +62,7 @@ total_tags = 0
 model_acc = 0
 model_total_tags = 0
 uas = 0
+las = 0
 total_tokens = 0
 pos_acc = 0
 
@@ -68,6 +71,8 @@ for seni in tqdm(range(len(data))):
     tokens_cpu = mapTokenToId(sen, word_map)
     tokens = mx.nd.array(tokens_cpu, ctx)
     pos_tag = mapPosTagToId(sen, pos_map)
+    deprel_tag_cpu = mapDeprelTagToId(sen, deprel_map)
+    deprel_tag = mx.nd.array(deprel_tag_cpu, ctx)
     tags = mapTransTagToId(sen)
     
     model_output = []
@@ -137,15 +142,25 @@ for seni in tqdm(range(len(data))):
             current_idx += 1
         assert current_idx == len(tags)
     heads_pred = reconstrut_tree_with_transition_labels(sen, pred)
+    deprel_pred = [deprel_map[None], ] # [ROOT] does not have head
+    # get relation label
+    for i in range(1, len(tokens_cpu)):
+        deprel_f = mx.nd.concat(f[i], f[heads_pred[i]], dim=0).reshape((1, -1))
+        deprel_f = parserModel.deprel_pred(deprel_f)
+        deprel_pred.append(int(deprel_f[0].argmax(axis=0).asscalar()))
     uas += getUAS(heads_pred, sen, config.PUNC_POS_TAG)
+    las += getLAS(heads_pred, deprel_pred, sen, deprel_map, config.PUNC_POS_TAG)
+    # TODO calculating LAS
     pos_pred = mx.nd.argmax(pos_f, axis=1)
     pos_acc += (pos_pred == mx.nd.array(pos_tag, ctx=ctx)).sum().asscalar() -1 # remove root
+    
 
+    # accumulating statistics
     acc += (mx.nd.array(pred) == mx.nd.array(tags)).sum().asscalar()
     model_acc += (mx.nd.array(model_gt) == mx.nd.array(model_pred)).sum().asscalar()
     total_tags += len(tags)
     model_total_tags += len(model_gt)
     total_tokens += len(heads_pred) -1 
 
-logging.info("Evaling: Pred acc={:.6} Model acc={:.6} UAS={:.6} POS acc={:.6}".format(acc/total_tags, model_acc/model_total_tags, uas/total_tokens, pos_acc/total_tokens))
+logging.info("Evaling: Pred acc={:.6} Model acc={:.6} UAS={:.6} LAS={:.6} POS acc={:.6}".format(acc/total_tags, model_acc/model_total_tags, uas/total_tokens, las/total_tokens, pos_acc/total_tokens))
 logging.shutdown()

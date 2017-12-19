@@ -28,6 +28,13 @@ def getWordPos(data):
     pos_tag = list(pos_tag)
     return words, pos_tag
 
+def getDeprelList(data):
+    deprels = set()
+    for sen in data:
+        for token in sen.tokens:
+            deprels.add(token.deprel)
+    return list(deprels)
+
 def mapTokenToId(sen: ud_dataloader.UDSentence, word_map:dict):
     ret = []
     for item in sen.tokens:
@@ -42,6 +49,13 @@ def mapPosTagToId(sen: ud_dataloader.UDSentence, tag_map:dict):
     for item in sen.tokens:
         if item.pos_tag in tag_map:
             ret.append(tag_map[item.pos_tag])
+    return ret
+
+def mapDeprelTagToId(sen: ud_dataloader.UDSentence, tag_map:dict):
+    ret = []
+    for item in sen.tokens:
+        if item.deprel in tag_map:
+            ret.append(tag_map[item.deprel])
     return ret
 
 def mapTransTagToId(sen: ud_dataloader.UDSentence):
@@ -127,3 +141,23 @@ def getUAS(heads_pred, sen, punctuation_tag=None):
     heads_gt = np.array(heads_gt) * punc
     heads_pred = np.array(heads_pred) * punc
     return (heads_pred == heads_gt).sum() - 1 # remove root
+
+def getLAS(heads_pred, deprel_pred, sen, deprel_map, punctuation_tag=None):
+    """
+    calculating LAS.
+
+    Arguments:
+        heads_pred: head label predicted with reconstrut_tree_with_transition_labels
+        deprel_pred: dependent relation label predicted
+        sen: sentence object
+        punctuation_tag: punctuation POS tag. Do not ignore punctuation if it is None.
+    """
+    heads_gt = [t.head for t in sen.tokens]
+    deprel_gt = [deprel_map[t.deprel] for t in sen.tokens]
+    punc = np.array([t.pos_tag != punctuation_tag for t in sen.tokens])
+    heads_gt = np.array(heads_gt) * punc
+    deprel_gt = np.array(deprel_gt) * punc
+    heads_pred = np.array(heads_pred) * punc
+    deprel_pred = np.array(deprel_pred) * punc
+    label_correct = (heads_pred == heads_gt) * (deprel_pred == deprel_gt)
+    return label_correct.sum() - 1 # remove root
