@@ -23,7 +23,7 @@ class UDToken:
             self.form = '[ROOT]'
             self.lemma = '[ROOT]'
             self.pos_tag = '[ROOT]'
-            self.x_pos_tag = '_'
+            self.x_pos_tag = '[ROOT]'
         else:
             self.parseLine(data_str)
     
@@ -102,4 +102,8 @@ def parseDocument(filename):
         ret.append(UDSentence(sentence_chunk))
     ret = list(filter(lambda x:not x.error_found, ret))
     return ret
+
+def mask_pos_with_x(sen: UDSentence):
+    for x in sen.tokens:
+        x.pos_tag = x.x_pos_tag
 

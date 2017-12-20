@@ -54,7 +54,7 @@ logging.info("Dumped word map to word_map.pkl")
 logging.info("Train data loaded: {}".format(train_data_fn))
 logging.info("Sentences count = {}".format(len(data)))
 logging.info("Words count = {}".format(len(word_map)))
-logging.info("POS Tag count = {}".format(len(word_map)))
+logging.info("POS Tag count = {}".format(len(pos_map)))
 
 ctx = mx.gpu(0)
 parserModel = ParserModel(len(word_list), config.NUM_EMBED, config.NUM_HIDDEN, len(pos_list), config.TAG_EMBED)

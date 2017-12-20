@@ -36,6 +36,7 @@ data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
 for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
+    ud_dataloader.mask_pos_with_x(sen) 
 words, pos_list = getWordPos(data)
 deprel_list = getDeprelList(data)
 words[config.UNKNOW_TOKEN] = 0
@@ -59,7 +60,7 @@ logging.info("Dumped word map to word_map.pkl")
 logging.info("Train data loaded: {}".format(train_data_fn))
 logging.info("Sentences count= {}".format(len(data)))
 logging.info("Words count = {}".format(len(word_map)))
-logging.info("POS Tag count = {}".format(len(word_map)))
+logging.info("POS Tag count = {}".format(len(pos_map)))
 logging.info("Dependent Relation count = {}".format(len(deprel_map)))
 
 ctx = mx.gpu(0)
