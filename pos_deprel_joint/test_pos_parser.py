@@ -34,6 +34,7 @@ data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
 for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
+    ud_dataloader.mask_pos_with_x(sen)
 
 # load word map
 with open(os.path.join(model_dump_path, 'word_map.pkl'), 'rb') as f:
