@@ -107,3 +107,10 @@ def mask_pos_with_x(sen: UDSentence):
     for x in sen.tokens:
         x.pos_tag = x.x_pos_tag
 
+def get_x_pos_of_punct(sen: UDSentence, punct_tag=None):
+    ret = set()
+    for x in sen.tokens:
+        if x.pos_tag == punct_tag:
+            ret.add(x.x_pos_tag)
+    return ret
+

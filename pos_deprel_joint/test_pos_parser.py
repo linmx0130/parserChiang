@@ -31,9 +31,11 @@ model_dump_path = args.model_path
 data = ud_dataloader.parseDocument(dev_data_fn)
 data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
 # data lowerize
+POS_OF_PUNCT = set()
 for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
+    POS_OF_PUNCT = POS_OF_PUNCT.union(ud_dataloader.get_x_pos_of_punct(sen, punct_tag=config.PUNC_POS_TAG))
     ud_dataloader.mask_pos_with_x(sen)
 
 # load word map
@@ -149,9 +151,8 @@ for seni in tqdm(range(len(data))):
         deprel_f = mx.nd.concat(f[i], f[heads_pred[i]], dim=0).reshape((1, -1))
         deprel_f = parserModel.deprel_pred(deprel_f)
         deprel_pred.append(int(deprel_f[0].argmax(axis=0).asscalar()))
-    uas += getUAS(heads_pred, sen, config.PUNC_POS_TAG)
-    las += getLAS(heads_pred, deprel_pred, sen, deprel_map, config.PUNC_POS_TAG)
-    # TODO calculating LAS
+    uas += getUAS(heads_pred, sen, POS_OF_PUNCT)
+    las += getLAS(heads_pred, deprel_pred, sen, deprel_map, POS_OF_PUNCT)
     pos_pred = mx.nd.argmax(pos_f, axis=1)
     pos_acc += (pos_pred == mx.nd.array(pos_tag, ctx=ctx)).sum().asscalar() -1 # remove root
     

@@ -37,6 +37,7 @@ for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
     ud_dataloader.mask_pos_with_x(sen) 
+
 words, pos_list = getWordPos(data)
 deprel_list = getDeprelList(data)
 words[config.UNKNOW_TOKEN] = 0

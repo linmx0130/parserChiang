@@ -127,7 +127,7 @@ def reconstrut_tree_with_transition_labels(sen: ud_dataloader, trans):
             raise RuntimeError('Unrecongized label!')
     return heads
 
-def getUAS(heads_pred, sen, punctuation_tag=None):
+def getUAS(heads_pred, sen, punctuation_tag=[]):
     """
     calculating UAS.
 
@@ -136,13 +136,16 @@ def getUAS(heads_pred, sen, punctuation_tag=None):
         sen: sentence object
         punctuation_tag: punctuation POS tag. Do not ignore punctuation if it is None.
     """
+    if type(punctuation_tag) is str:
+        punctuation_tag = [punctuation_tag, ]
+
     heads_gt = [t.head for t in sen.tokens]
-    punc = np.array([t.pos_tag != punctuation_tag for t in sen.tokens])
+    punc = np.array([not(t.pos_tag in punctuation_tag) for t in sen.tokens])
     heads_gt = np.array(heads_gt) * punc
     heads_pred = np.array(heads_pred) * punc
     return (heads_pred == heads_gt).sum() - 1 # remove root
 
-def getLAS(heads_pred, deprel_pred, sen, deprel_map, punctuation_tag=None):
+def getLAS(heads_pred, deprel_pred, sen, deprel_map, punctuation_tag=[]):
     """
     calculating LAS.
 
@@ -152,9 +155,12 @@ def getLAS(heads_pred, deprel_pred, sen, deprel_map, punctuation_tag=None):
         sen: sentence object
         punctuation_tag: punctuation POS tag. Do not ignore punctuation if it is None.
     """
+    if type(punctuation_tag) is str:
+        punctuation_tag = [punctuation_tag, ]
+
     heads_gt = [t.head for t in sen.tokens]
     deprel_gt = [deprel_map[t.deprel] for t in sen.tokens]
-    punc = np.array([t.pos_tag != punctuation_tag for t in sen.tokens])
+    punc = np.array([not(t.pos_tag in punctuation_tag) for t in sen.tokens])
     heads_gt = np.array(heads_gt) * punc
     deprel_gt = np.array(deprel_gt) * punc
     heads_pred = np.array(heads_pred) * punc
