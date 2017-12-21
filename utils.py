@@ -49,6 +49,8 @@ def mapPosTagToId(sen: ud_dataloader.UDSentence, tag_map:dict):
     for item in sen.tokens:
         if item.pos_tag in tag_map:
             ret.append(tag_map[item.pos_tag])
+        else:
+            raise RuntimeError("POS tag {} not found!".format(item.pos_tag))
     return ret
 
 def mapDeprelTagToId(sen: ud_dataloader.UDSentence, tag_map:dict):

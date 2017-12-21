@@ -8,6 +8,7 @@ There are different models in this repo:
 2. *pos_aid/*: This parser model requires standard POS tagging during inference, which is provided in CoNLL dataset. In practice, you may use Stanford NLP tools to get good POS tags.
 3. *pos_joint/*: This parser model will predict POS tags. 
 4. *pos_deprel_joint/*: This parser model will predict POS tags and **dependent relation label**. LAS index requires the output from this model. 
+4. *pos_aid_deprel_joint/*: This parser model requires standard POS tagging during inference, and will predict ependent relation label.
 
 ### Usage
 Data should be put into *data/* directory. Train the model with
