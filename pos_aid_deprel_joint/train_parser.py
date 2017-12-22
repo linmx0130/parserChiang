@@ -17,6 +17,8 @@ import os
 from utils import * 
 import pickle
 
+argsparser = trainerArgumentParser()
+args = argsparser.parse_args()
 current_time = init_logging("train")
 model_dump_path = 'model_dumps_{}{:02}{:02}_{:02}_{:02}_{:02}/'.format(
         current_time.tm_year,
@@ -63,13 +65,17 @@ logging.info("Words count = {}".format(len(word_map)))
 logging.info("POS count = {}".format(len(pos_map)))
 logging.info("Dependent Relation count = {}".format(len(deprel_map)))
 
-ctx = mx.gpu(0)
+if args.use_cpu:
+    ctx = mx.cpu(0)
+else:
+    ctx = mx.gpu(0)
 parserModel = ParserModel(len(word_list), len(pos_list), config.EMBED_SIZE, config.POS_EMBED_SIZE, config.NUM_HIDDEN, len(deprel_map))
 parser_params = parserModel.collect_params()
 parser_params.initialize(mx.init.Xavier(), ctx=ctx)
-#logging.info("Parameters initialized: {}".format(str(parser_params)))
-
-zero_const = mx.nd.zeros(shape=100, ctx=ctx)
+zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN * 2, ctx=ctx)
+if args.wordvec is not None:
+    logging.info("Loading word vector from {}".format(args.wordvec))
+    setEmbeddingWithWordvec(parserModel.embed, word_map, args.wordvec)
 
 trainer = gluon.Trainer(parser_params, 'adagrad', {'learning_rate': 0.04, 'wd':1e-4})
 loss = gluon.loss.SoftmaxCrossEntropyLoss()

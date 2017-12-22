@@ -17,6 +17,9 @@ import os
 from utils import * 
 import pickle
 
+argsparser = trainerArgumentParser()
+args = argsparser.parse_args()
+
 current_time = init_logging("train")
 model_dump_path = 'model_dumps_{}{:02}{:02}_{:02}_{:02}_{:02}/'.format(
         current_time.tm_year,
@@ -64,11 +67,16 @@ logging.info("Words count = {}".format(len(word_map)))
 logging.info("POS Tag count = {}".format(len(pos_map)))
 logging.info("Dependent Relation count = {}".format(len(deprel_map)))
 
-ctx = mx.gpu(0)
+if args.use_cpu:
+    ctx = mx.cpu(0)
+else:
+    ctx = mx.gpu(0)
 parserModel = ParserModel(len(word_list), config.NUM_EMBED, config.NUM_HIDDEN, len(pos_list), config.TAG_EMBED, len(deprel_map))
 parser_params = parserModel.collect_params()
 parser_params.initialize(mx.init.Xavier(), ctx=ctx)
-#logging.info("Parameters initialized: {}".format(str(parser_params)))
+if args.wordvec is not None:
+    logging.info("Loading wordvec from {}".format(args.wordvec))
+    setEmbeddingWithWordvec(parserModel.embed, word_map, args.wordvec)
 
 zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN*2, ctx=ctx)
 

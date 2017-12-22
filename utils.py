@@ -11,6 +11,7 @@ from get_trans import get_transition_sequence, cross_check
 import logging
 import time
 import numpy as np
+import argparse
 
 def getWordPos(data):
     words = {}
@@ -169,3 +170,39 @@ def getLAS(heads_pred, deprel_pred, sen, deprel_map, punctuation_tag=[]):
     deprel_pred = np.array(deprel_pred) * punc
     label_correct = (heads_pred == heads_gt) * (deprel_pred == deprel_gt)
     return label_correct.sum() - 1 # remove root
+
+def loadWordvec(wordvec_filename):
+    """
+    load word vector text file.
+    
+    Arguments:
+        wordvec_filename: filename of the file to load
+    """
+    word2vec = {}
+    with open(wordvec_filename) as f:
+        for l in f:
+            l = l.split()
+            w = l[0]
+            vec = np.array([float(t) for t in l[1:]], dtype=np.float32)
+            word2vec[w] = vec
+    return word2vec
+
+def setEmbeddingWithWordvec(embed_layer, word_map, wordvec_filename):
+    word2vec = loadWordvec(wordvec_filename)
+    weight = embed_layer.weight.data()
+    for w in word2vec:
+        if w in word_map:
+            weight[word_map[w]] = word2vec[w]
+    embed_layer.weight.set_data(weight)
+
+def trainerArgumentParser():
+    """
+    trainer default argument parser generator
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--wordvec', dest='wordvec', default=None, 
+            help='Load word vector file as initial value of embedding layers.')
+    parser.add_argument('--cpu', dest='use_cpu', default=False, 
+            action='store_true', help='Train on CPUs.')
+    return parser
+
