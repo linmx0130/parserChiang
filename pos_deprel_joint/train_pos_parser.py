@@ -41,10 +41,10 @@ for sen in data:
         token.form = token.form.lower()
     ud_dataloader.mask_pos_with_x(sen) 
 
-words, pos_list = getWordPos(data)
+words_count, pos_list = getWordPos(data)
 deprel_list = getDeprelList(data)
-words[config.UNKNOW_TOKEN] = 0
-word_list = sorted(list(words.keys()))
+words_count[config.UNKNOW_TOKEN] = 0
+word_list = sorted(list(words_count.keys()))
 word_map = {}
 for i, w in enumerate(word_list):
     word_map[w] = i
@@ -96,7 +96,7 @@ for epoch in range(1, 1000+1):
     deprel_L = mx.nd.zeros(1, ctx=ctx)
     #training 
     for seni, sen in enumerate(data):
-        tokens_cpu = mapTokenToId(sen, word_map)
+        tokens_cpu = mapTokenToId(sen, word_map, config.WORD_DROPOUT_RATE, words_count)
         tokens = mx.nd.array(tokens_cpu, ctx)
         pos_tag_cpu = mapPosTagToId(sen, pos_map)
         pos_tag = mx.nd.array(pos_tag_cpu, ctx)

@@ -14,6 +14,16 @@ import numpy as np
 import argparse
 
 def getWordPos(data):
+    """
+    Get word list and POS tags list.
+
+    Arguments:
+        data: a list of sentence objects.
+    Return:
+        words: a dict of str->int. 
+               The value is the appearance count of the word.
+        pos_tag: POS tag list.
+    """
     words = {}
     pos_tag = set()
     for sen in data:
@@ -36,12 +46,37 @@ def getDeprelList(data):
             deprels.add(token.deprel)
     return list(deprels)
 
-def mapTokenToId(sen: ud_dataloader.UDSentence, word_map:dict):
+def mapTokenToId(sen: ud_dataloader.UDSentence, word_map:dict, word_dropout_rate=0, words_count=None):
+    """
+    map tokens in a sentence into word Id with word_map
+    
+    Arguments:
+        sen: sentence object.
+        word_map: word string to ID mapping dict.
+        word_dropout_rate: word dropout rate, set to 0 if dropout is not applied.
+        words_count: word counts dict for word dropout.
+    """
     ret = []
-    for item in sen.tokens:
+    if word_dropout_rate > 0:
+        assert words_count is not None
+        drop_rand = np.random.uniform(0, 1, len(sen.tokens))
+
+    for i, item in enumerate(sen.tokens):
+        not_unk_token = False
         if item.form in word_map:
+            if word_dropout_rate > 0:
+                # A higher words_count will lead to lower keep_thresh
+                # So it will keep word with a low drop_rand[i] 
+                keep_thresh = word_dropout_rate / (word_dropout_rate + words_count[item.form]) 
+                if drop_rand[i] >= keep_thresh:
+                    not_unk_token = True
+            else:
+                not_unk_token = True
+
+        if not_unk_token:
             ret.append(word_map[item.form])
         else:
+            print("UNKNOW: {}".format(item.form))
             ret.append(word_map[config.UNKNOW_TOKEN])
     return ret
 
