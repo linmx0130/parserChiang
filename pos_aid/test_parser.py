@@ -50,7 +50,7 @@ model_file = os.path.join(model_dump_path, args.model_file)
 parserModel.load_params(model_file, ctx=ctx)
 logging.info("Model loaded: {}".format(model_file))
 
-zero_const = mx.nd.zeros(shape=100, ctx=ctx)
+zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN * 2, ctx=ctx)
 
 # eval
 print("Evaluating...")

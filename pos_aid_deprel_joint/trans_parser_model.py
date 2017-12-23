@@ -23,8 +23,8 @@ class ParserModel(gluon.Block):
     def __init__(self, vocab_size, pos_tag_size, num_embed, num_tag_embed, num_hidden, num_deprel, **kwargs):
         super(ParserModel, self).__init__(**kwargs)
         with self.name_scope():
-            self.embed = gluon.nn.Embedding(vocab_size, num_embed, weight_initializer=mx.init.Uniform(0.01))
-            self.pos_embed = gluon.nn.Embedding(pos_tag_size, num_tag_embed, weight_initializer=mx.init.Uniform(0.01))
+            self.embed = gluon.nn.Embedding(vocab_size, num_embed, weight_initializer=mx.init.Uniform(0.1))
+            self.pos_embed = gluon.nn.Embedding(pos_tag_size, num_tag_embed, weight_initializer=mx.init.Uniform(0.1))
             self.dropout = gluon.nn.Dropout(0.2)
             self.lstm = gluon.rnn.LSTM(num_hidden, 2, bidirectional=True, input_size=num_embed + num_tag_embed)
             self.trans_pred= TransPredModel(3, num_hidden * 2 * 4, 100)
