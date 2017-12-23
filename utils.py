@@ -76,7 +76,6 @@ def mapTokenToId(sen: ud_dataloader.UDSentence, word_map:dict, word_dropout_rate
         if not_unk_token:
             ret.append(word_map[item.form])
         else:
-            print("UNKNOW: {}".format(item.form))
             ret.append(word_map[config.UNKNOW_TOKEN])
     return ret
 
