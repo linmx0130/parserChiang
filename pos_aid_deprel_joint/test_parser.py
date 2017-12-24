@@ -17,14 +17,9 @@ import os
 import argparse
 from tqdm import tqdm
 
-def parseArgs():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('model_path')
-    parser.add_argument('model_file')
-    return parser.parse_args()
-
+args_parser = testerArgumentParser()
+args = args_parser.parse_args()
 current_time = init_logging("test")
-args = parseArgs()
 model_dump_path = args.model_path
 
 data = ud_dataloader.parseDocument(dev_data_fn)
@@ -49,7 +44,10 @@ logging.info("Words count = {}".format(len(word_map)))
 logging.info("POS Tag count = {}".format(len(pos_map)))
 logging.info("Dependent Relation count = {}".format(len(deprel_map)))
 
-ctx = mx.gpu(0)
+if args.use_cpu:
+    ctx = mx.cpu(0)
+else:
+    ctx = mx.gpu(0)
 parserModel = ParserModel(len(word_map), len(pos_map), config.EMBED_SIZE, config.POS_EMBED_SIZE, config.NUM_HIDDEN, len(deprel_map))
 model_file = os.path.join(model_dump_path, args.model_file)
 parserModel.load_params(model_file, ctx=ctx)

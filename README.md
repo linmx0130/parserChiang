@@ -4,11 +4,13 @@ This repo support CoNLL format, which is adapted by [Universal Dependencies](htt
 
 ### Models
 There are different models in this repo:
-1. *default/*: The default parser model using only word features. It is the baseline of all other models.
-2. *pos_aid/*: This parser model requires standard POS tagging during inference, which is provided in CoNLL dataset. In practice, you may use Stanford NLP tools to get good POS tags.
-3. *pos_joint/*: This parser model will predict POS tags. 
+1. [DEPRECATED] *default/*: The default parser model using only word features. It is the baseline of all other models.
+2. [DEPRECATED] *pos_aid/*: This parser model requires standard POS tagging during inference, which is provided in CoNLL dataset. In practice, you may use Stanford NLP tools to get good POS tags.
+3. [DEPRECATED] *pos_joint/*: This parser model will predict POS tags. 
 4. *pos_deprel_joint/*: This parser model will predict POS tags and **dependent relation label**. LAS index requires the output from this model. 
-4. *pos_aid_deprel_joint/*: This parser model requires standard POS tagging during inference, and will predict ependent relation label.
+5. *pos_aid_deprel_joint/*: This parser model requires standard POS tagging during inference, and will predict ependent relation label.
+
+The models marked with [DEPRECATED] will not be updated to latest functions.
 
 ### Usage
 Data should be put into *data/* directory. Train the model with

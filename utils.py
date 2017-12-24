@@ -240,3 +240,15 @@ def trainerArgumentParser():
             action='store_true', help='Train on CPUs.')
     return parser
 
+def testerArgumentParser():
+    """
+    tester default argument parser generator 
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('model_path', 
+                        help="The directory stored model files and word map files.")
+    parser.add_argument('model_file', help="Model file name.")
+    parser.add_argument('--cpu', help='Use CPU to run the model.', 
+                        dest='use_cpu', default=False, action='store_true')
+    return parser
+
