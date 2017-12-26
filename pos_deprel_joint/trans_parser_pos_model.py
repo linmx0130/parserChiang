@@ -24,9 +24,9 @@ class ParserModel(gluon.Block):
         super(ParserModel, self).__init__(**kwargs)
         with self.name_scope():
             # Word and POS tag embed
-            self.embed = gluon.nn.Embedding(vocab_size, num_embed, weight_initializer=mx.init.Uniform(0.01))
+            self.embed = gluon.nn.Embedding(vocab_size, num_embed, weight_initializer=mx.init.Uniform(0.1))
             self.dropout = gluon.nn.Dropout(0.2)
-            self.tag_embed = gluon.nn.Embedding(tag_count, tag_embed_size, weight_initializer=mx.init.Uniform(0.01))
+            self.tag_embed = gluon.nn.Embedding(tag_count, tag_embed_size, weight_initializer=mx.init.Uniform(0.1))
             # POS tagger
             self.lstm_tag = gluon.rnn.LSTM(num_hidden, 2, bidirectional=True, input_size=num_embed)
             self.tag_cls = gluon.nn.Dense(tag_count, in_units=num_hidden*2)
