@@ -238,6 +238,8 @@ def trainerArgumentParser():
             help='Load word vector file as initial value of embedding layers.')
     parser.add_argument('--cpu', dest='use_cpu', default=False, 
             action='store_true', help='Train on CPUs.')
+    parser.add_argument('--trainer', dest='trainer', default='adam', 
+            help='Choose optimization algorithm. {adam, adagrad, sgd} are supported.')
     return parser
 
 def testerArgumentParser():
@@ -252,3 +254,12 @@ def testerArgumentParser():
                         dest='use_cpu', default=False, action='store_true')
     return parser
 
+def getDefaultTrainerHyperparams(trainer_name):
+    """
+    Get default trainer by trainer name
+    """
+    ret = {'adam': {'learning_rate':0.001, 'wd': 1e-4},
+           'adagrad': {'learning_rate':0.04, 'wd': 1e-4},
+           'sgd': {'learning_rate': 0.0001, 'wd': 1e-4, 'momentum': 0.9}
+           }
+    return ret[trainer_name]

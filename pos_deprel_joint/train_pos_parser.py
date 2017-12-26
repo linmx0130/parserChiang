@@ -80,7 +80,8 @@ if args.wordvec is not None:
 
 zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN*2, ctx=ctx)
 
-trainer = gluon.Trainer(parser_params, 'adagrad', {'learning_rate': 0.04, 'wd':1e-4})
+trainer = gluon.Trainer(parser_params, args.trainer, 
+                        getDefaultTrainerHyperparams(args.trainer))
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 for epoch in range(1, 1000+1):
