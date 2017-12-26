@@ -88,7 +88,12 @@ for seni in tqdm(range(len(data))):
 
     # parse by transition
     with autograd.predict_mode():
-        f, pos_f = parserModel(tokens)
+        f_matrix, pos_f = parserModel(tokens)
+        # split matrix into vectors
+        f = []
+        for i in range(len(f_matrix)):
+            f.append(f_matrix[i])
+
         while buf_idx < len(tokens_cpu) or len(stack) > 1:
             if buf_idx < len(tokens_cpu):
                 if len(stack) < 2:
@@ -137,10 +142,20 @@ for seni in tqdm(range(len(data))):
             elif current_tag == 1: # LEFT-ARC
                 s2 = stack.pop()
                 s1 = stack.pop()
+                combined_feature = mx.nd.concat(
+                        f[s2].reshape((1, -1)),
+                        f[s1].reshape((1, -1)),
+                        dim=0)
+                f[s2] = parserModel.fusion_transformer(combined_feature)[0]
                 stack.append(s2)
             elif current_tag == 2: #RIGHT-ARC
                 s2 = stack.pop()
                 s1 = stack.pop()
+                combined_feature = mx.nd.concat(
+                        f[s1].reshape((1, -1)),
+                        f[s2].reshape((1, -1)),
+                        dim=0)
+                f[s1] = parserModel.fusion_transformer(combined_feature)[0]
                 stack.append(s1)
             current_idx += 1
         assert current_idx == len(tags)
