@@ -39,7 +39,7 @@ data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
 for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
-    ud_dataloader.mask_pos_with_x(sen) 
+    #ud_dataloader.mask_pos_with_x(sen) 
 
 words_count, pos_list = getWordPos(data)
 deprel_list = getDeprelList(data)
@@ -80,7 +80,7 @@ if args.wordvec is not None:
 
 zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN*2, ctx=ctx)
 
-trainer = gluon.Trainer(parser_params, 'adagrad', {'learning_rate': 0.04, 'wd':1e-4})
+trainer = gluon.Trainer(parser_params, args.trainer, getDefaultTrainerHyperparams(args.trainer))
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 for epoch in range(1, 1000+1):

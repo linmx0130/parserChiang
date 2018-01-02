@@ -25,14 +25,15 @@ current_time = init_logging("test")
 model_dump_path = args.model_path
 
 data = ud_dataloader.parseDocument(dev_data_fn)
-data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
+data = [t for t in data if cross_check(t.tokens)] # and len(t) > 4]
 # data lowerize
-POS_OF_PUNCT = set()
+#POS_OF_PUNCT = set()
+POS_OF_PUNCT = [config.PUNC_POS_TAG, ]
 for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
-    POS_OF_PUNCT = POS_OF_PUNCT.union(ud_dataloader.get_x_pos_of_punct(sen, punct_tag=config.PUNC_POS_TAG))
-    ud_dataloader.mask_pos_with_x(sen)
+#    POS_OF_PUNCT = POS_OF_PUNCT.union(ud_dataloader.get_x_pos_of_punct(sen, punct_tag=config.PUNC_POS_TAG))
+#    ud_dataloader.mask_pos_with_x(sen)
 
 # load word map
 with open(os.path.join(model_dump_path, 'word_map.pkl'), 'rb') as f:
