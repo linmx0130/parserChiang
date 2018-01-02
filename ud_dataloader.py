@@ -28,8 +28,8 @@ class UDToken:
             self.parseLine(data_str)
     
     def parseLine(self, input_line):
-        items = input_line.strip().split()
-        assert len(items)==10
+        items = input_line.strip().split('\t')
+        assert len(items)==10, print(input_line, '\n', items, len(items))
         try:
             self.wid = int(items[0])
             self.form = items[1]
@@ -65,7 +65,10 @@ class UDSentence:
         self.tokens = [UDToken()]
         try:
             for t in lines:
-                self.tokens.append(UDToken(t))
+                try:
+                    self.tokens.append(UDToken(t))
+                except ValueError:
+                    pass
         except Exception as e:
             print("Parsing error at {}: {}".format(self.text, str(e)))
             self.error_found = True
@@ -88,7 +91,7 @@ def parseDocument(filename):
         data_by_sentences = []
         sentence_pd = []
         for t in data:
-            if t.startswith('# newdoc id'):
+            if t.startswith('#'):
                 continue
             if len(t)!=0:
                 sentence_pd.append(t)
