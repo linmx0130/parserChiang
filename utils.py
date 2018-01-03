@@ -255,6 +255,9 @@ def testerArgumentParser():
     parser.add_argument('model_file', help="Model file name.")
     parser.add_argument('--cpu', help='Use CPU to run the model.', 
                         dest='use_cpu', default=False, action='store_true')
+    parser.add_argument('--use_x_pos', dest='use_x_pos', default=False,
+            action='store_true',
+            help='Use the POS tagging specified by the language. Or X-POS Tag.')
     return parser
 
 def getDefaultTrainerHyperparams(trainer_name):
