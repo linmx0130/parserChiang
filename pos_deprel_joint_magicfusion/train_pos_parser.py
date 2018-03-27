@@ -200,8 +200,9 @@ for epoch in range(1, 1000+1):
             total_L = total_L + L + pos_loss + deprel_L
 
         if (seni + 1) % config.UPDATE_STEP == 0:
-            total_L.backward()
-            trainer.step(1)
+            if total_L == total_L:
+                total_L.backward()
+                trainer.step(1)
             L = mx.nd.zeros(1, ctx=ctx) 
             pos_loss = mx.nd.zeros(1, ctx=ctx)
             deprel_L = mx.nd.zeros(1, ctx=ctx)

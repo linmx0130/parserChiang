@@ -23,7 +23,7 @@ current_time = init_logging("test")
 model_dump_path = args.model_path
 
 data = ud_dataloader.parseDocument(dev_data_fn)
-data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
+data = [t for t in data if cross_check(t.tokens)] #and len(t) > 4]
 # data lowerize
 POS_OF_PUNCT = set()
 POS_OF_PUNCT.add(config.PUNC_POS_TAG)

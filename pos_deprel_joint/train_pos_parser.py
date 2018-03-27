@@ -34,7 +34,7 @@ if not os.path.exists(model_dump_path):
     logging.info("Model dump path: {}".format(model_dump_path))    
 
 data = ud_dataloader.parseDocument(train_data_fn)
-data = [t for t in data if cross_check(t.tokens) and len(t) > 4]
+data = [t for t in data if cross_check(t.tokens)] #and len(t) > 4]
 # data lowerize
 for sen in data:
     for token in sen.tokens:
