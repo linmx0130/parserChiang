@@ -16,6 +16,7 @@ from trans_parser_pos_model import ParserModel
 import os
 from utils import * 
 import pickle
+import marginloss
 
 argsparser = trainerArgumentParser()
 args = argsparser.parse_args()
@@ -83,7 +84,8 @@ zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN*2, ctx=ctx)
 
 trainer = gluon.Trainer(parser_params, args.trainer, 
                         getDefaultTrainerHyperparams(args.trainer))
-loss = gluon.loss.SoftmaxCrossEntropyLoss()
+
+celoss = gluon.loss.SoftmaxCrossEntropyLoss()
 
 for epoch in range(1, 1000+1):
     random.shuffle(data)
@@ -118,7 +120,7 @@ for epoch in range(1, 1000+1):
         with autograd.record():
             f, pos_f = parserModel(tokens)
             # POS Tagger loss
-            pos_loss = pos_loss + loss(pos_f, pos_tag).mean()
+            pos_loss = pos_loss + celoss(pos_f, pos_tag).mean()
 
             # parse by transition
             while buf_idx < len(tokens_cpu) or len(stack) > 1:
@@ -177,13 +179,18 @@ for epoch in range(1, 1000+1):
             for i in range(0, len(model_output)):
                 out = model_output[i]
                 gt = model_gt[i]
-                L = L + loss(out, gt)
+                if args.loss == 'maxmargin':
+                    local_loss = mx.nd.Custom(out, gt, op_type="marginloss")
+                if args.loss == 'ce':
+                    local_loss = celoss(out, gt)
+                L = L + local_loss
+                # L = L + celoss(out, gt)
             # train deprel model: concatenating head word and the child.
             # ignore index 0: ROOT does not have head
             for i in range(1, len(tokens_cpu)):
                 deprel_f = mx.nd.concat(f[i], f[head_of_tokens[i]], dim=0).reshape((1, -1))
                 deprel_f = parserModel.deprel_pred(deprel_f)
-                deprel_L = deprel_L + loss(deprel_f, deprel_tag[i])
+                deprel_L = deprel_L + celoss(deprel_f, deprel_tag[i])
             total_L = total_L + L + pos_loss + deprel_L
 
         if (seni + 1) % config.UPDATE_STEP == 0:

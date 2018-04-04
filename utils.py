@@ -243,6 +243,8 @@ def trainerArgumentParser():
     parser.add_argument('--use_x_pos', dest='use_x_pos', default=False,
             action='store_true',
             help='Use the POS tagging specified by the language. Or X-POS Tag.')
+    parser.add_argument('--loss', dest='loss', default='ce',
+            help="Choose the loss function in {ce, maxmargin}.")
     return parser
 
 def testerArgumentParser():
