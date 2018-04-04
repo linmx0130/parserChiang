@@ -16,6 +16,7 @@ from trans_parser_model import ParserModel
 import os
 from utils import * 
 import pickle
+from marginloss import max_margin_loss
 
 argsparser = trainerArgumentParser()
 args = argsparser.parse_args()
@@ -81,7 +82,10 @@ if args.wordvec is not None:
 # trainer = gluon.Trainer(parser_params, 'adagrad', {'learning_rate': 0.04, 'wd':1e-4})
 trainer = gluon.Trainer(parser_params, args.trainer,
                         getDefaultTrainerHyperparams(args.trainer))
-loss = gluon.loss.SoftmaxCrossEntropyLoss()
+if args.loss == "ce":
+    loss = gluon.loss.SoftmaxCrossEntropyLoss()
+else:
+    loss = max_margin_loss
 
 for epoch in range(1, 1000+1):
     random.shuffle(data)

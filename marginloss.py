@@ -64,6 +64,8 @@ class MarginLossProp(mx.operator.CustomOpProp):
     def create_operator(self, ctx, shapes, types):
         return MarginLoss()
 
+def max_margin_loss(data, label):
+    return mx.nd.Custom(data, label, op_type="marginloss")
 
 if __name__=="__main__":
     data = mx.symbol.Variable('data')

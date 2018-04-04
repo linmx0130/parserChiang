@@ -16,7 +16,7 @@ from trans_parser_pos_model import ParserModel
 import os
 from utils import * 
 import pickle
-import marginloss
+from marginloss import max_margin_loss
 
 argsparser = trainerArgumentParser()
 args = argsparser.parse_args()
@@ -180,7 +180,7 @@ for epoch in range(1, 1000+1):
                 out = model_output[i]
                 gt = model_gt[i]
                 if args.loss == 'maxmargin':
-                    local_loss = mx.nd.Custom(out, gt, op_type="marginloss")
+                    local_loss = max_margin_loss(out, gt)
                 if args.loss == 'ce':
                     local_loss = celoss(out, gt)
                 L = L + local_loss
