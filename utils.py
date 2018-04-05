@@ -240,6 +240,8 @@ def trainerArgumentParser():
             action='store_true', help='Train on CPUs.')
     parser.add_argument('--trainer', dest='trainer', default='adam', 
             help='Choose optimization algorithm. {adam, adagrad, sgd} are supported.')
+    parser.add_argument('--lr', help='Modify learning rate.', 
+                        dest='lr', default=None)
     parser.add_argument('--use_x_pos', dest='use_x_pos', default=False,
             action='store_true',
             help='Use the POS tagging specified by the language. Or X-POS Tag.')
