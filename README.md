@@ -2,6 +2,7 @@ parserChiang - Naïve Transition-based Dependency Parser in Gluon
 =====
 This repo support CoNLL format, which is adapted by [Universal Dependencies](http://universaldependencies.org/) Project. parserChiang is implemented with great [MXNet gluon](http://gluon.mxnet.io/).
 
+![Babel Towel: right bottom part](https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Pieter_Bruegel_the_Elder_-_The_Tower_of_Babel_%28Vienna%29_-_Google_Art_Project-x2-y1.jpg/600px-Pieter_Bruegel_the_Elder_-_The_Tower_of_Babel_%28Vienna%29_-_Google_Art_Project-x2-y1.jpg)
 ### Models
 There are different models in this repo:
 1. [DEPRECATED] *default/*: The default parser model using only word features. It is the baseline of all other models.
