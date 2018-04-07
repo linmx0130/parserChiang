@@ -13,7 +13,7 @@ from mxnet.io import NDArrayIter
 import logging
 
 class MarginLoss(mx.operator.CustomOp):
-    def __init__(self, margin=1, l2reg=0.001):
+    def __init__(self, margin=1, l2reg=0):
         self.margin = float(margin)
         self.l2reg = float(l2reg)
 
@@ -29,8 +29,6 @@ class MarginLoss(mx.operator.CustomOp):
         mlp_max = mx.nd.max(xx, axis=1)
         margin_loss = mlp_max - mlp_gt + self.margin
         margin_loss *= (margin_loss>0)
-        # get regularization loss
-        margin_loss += (x * x * self.l2reg).sum(axis=1)
         self.assign(out_data[0], req[0], margin_loss)
 
     def backward(self, req, out_grad, in_data, out_data, in_grad, aux):
@@ -52,12 +50,12 @@ class MarginLoss(mx.operator.CustomOp):
         grad *= mask
 
         # derive reg loss
-        grad += x * self.l2reg * 2
+        grad += x * self.l2reg * 2 / x.shape[1]
         self.assign(in_grad[0], req[0], grad)
 
 @mx.operator.register("marginloss")
 class MarginLossProp(mx.operator.CustomOpProp):
-    def __init__(self, margin=1, l2reg=0.001):
+    def __init__(self, margin=1, l2reg=0.0001):
         super(MarginLossProp, self).__init__(need_top_grad=False)
         self.margin = margin
         self.l2reg = l2reg
@@ -76,7 +74,7 @@ class MarginLossProp(mx.operator.CustomOpProp):
     def create_operator(self, ctx, shapes, types):
         return MarginLoss(self.margin, self.l2reg)
 
-def max_margin_loss(data, label, margin=1, l2reg=0.001):
+def max_margin_loss(data, label, margin=1, l2reg=0):
     return mx.nd.Custom(data, label, margin=margin, l2reg=l2reg, op_type="marginloss")
 
 if __name__=="__main__":
