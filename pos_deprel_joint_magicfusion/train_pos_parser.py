@@ -16,6 +16,7 @@ from trans_parser_pos_model import ParserModel
 import os
 from utils import * 
 import pickle
+from marginloss import max_margin_loss
 
 argsparser = trainerArgumentParser()
 args = argsparser.parse_args()
@@ -80,8 +81,19 @@ if args.wordvec is not None:
 
 zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN*2, ctx=ctx)
 
-trainer = gluon.Trainer(parser_params, args.trainer, getDefaultTrainerHyperparams(args.trainer))
+trainerHyperparams = getDefaultTrainerHyperparams(args.trainer)
+if not (args.lr is None):
+    trainerHyperparams['learning_rate'] = float(args.lr)
+
+trainer = gluon.Trainer(parser_params, args.trainer, 
+                        trainerHyperparams)
+logging.info("Trainer: {}, Hyperparameters: {}".format(args.trainer, trainerHyperparams))
+
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
+if args.loss == "ce":
+    loss = gluon.loss.SoftmaxCrossEntropyLoss()
+if args.loss == "maxmargin":
+    loss = lambda data, label: max_margin_loss(data, label)
 
 for epoch in range(1, 1000+1):
     random.shuffle(data)
@@ -199,8 +211,16 @@ for epoch in range(1, 1000+1):
                 deprel_L = deprel_L + loss(deprel_f, deprel_tag[i])
             total_L = total_L + L + pos_loss + deprel_L
 
+        acc_accu += (mx.nd.array(model_gt)==mx.nd.array(model_pred)).sum().asscalar()
+        acc_total += len(model_pred)
+        avg_loss += L.asscalar() 
+        avg_pos_loss += pos_loss.asscalar()
+        avg_deprel_loss += deprel_L.asscalar()
+        
         if (seni + 1) % config.UPDATE_STEP == 0:
             if total_L == total_L:
+                with autograd.record():
+                    total_L = total_L / config.UPDATE_STEP
                 total_L.backward()
                 trainer.step(1)
             L = mx.nd.zeros(1, ctx=ctx) 
@@ -208,16 +228,11 @@ for epoch in range(1, 1000+1):
             deprel_L = mx.nd.zeros(1, ctx=ctx)
             total_L = mx.nd.zeros(1, ctx=ctx)
         
-        acc_accu += (mx.nd.array(model_gt)==mx.nd.array(model_pred)).sum().asscalar()
-        acc_total += len(model_pred)
-        avg_loss += L.asscalar() / len(model_output)
-        avg_pos_loss += pos_loss.asscalar() / len(pos_tag)
-        avg_deprel_loss += deprel_L.asscalar() / (len(head_of_tokens) - 1)
 
         if seni % config.prompt_inteval == config.prompt_inteval - 1:
-            avg_loss /= config.prompt_inteval * config.UPDATE_STEP
-            avg_pos_loss /= config.prompt_inteval * config.UPDATE_STEP
-            avg_deprel_loss /= config.prompt_inteval * config.UPDATE_STEP
+            avg_loss /= acc_total
+            avg_pos_loss /= acc_total
+            avg_deprel_loss /= acc_total
             acc = acc_accu / acc_total
             logging.info("Epoch {} sen {} POS loss={:.6} Dep loss={:.6} loss={:.6} train acc={:.6}".format(epoch, seni, avg_pos_loss, avg_deprel_loss, avg_loss, acc))
 

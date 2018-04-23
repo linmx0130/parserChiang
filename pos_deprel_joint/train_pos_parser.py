@@ -2,7 +2,7 @@
 # 
 # train_parser.py
 # A basic LSTM transition-based parser. Training code.
-# Copyright 2017 Mengxiao Lin <linmx0130@gmail.com>
+# Copyright 2017-2018 Mengxiao Lin <linmx0130@gmail.com>
 #
 
 import config
@@ -93,7 +93,7 @@ logging.info("Trainer: {}, Hyperparameters: {}".format(args.trainer, trainerHype
 if args.loss == "ce":
     loss = gluon.loss.SoftmaxCrossEntropyLoss()
 if args.loss == "maxmargin":
-    loss = lambda data, label: max_margin_loss(data, label, l2reg=4e-5)
+    loss = lambda data, label: max_margin_loss(data, label)
 
 for epoch in range(1, 1000+1):
     random.shuffle(data)
