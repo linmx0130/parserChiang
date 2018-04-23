@@ -79,9 +79,13 @@ if args.wordvec is not None:
     logging.info("Loading word vector from {}".format(args.wordvec))
     setEmbeddingWithWordvec(parserModel.embed, word_map, args.wordvec)
 
-# trainer = gluon.Trainer(parser_params, 'adagrad', {'learning_rate': 0.04, 'wd':1e-4})
+trainerHyperparams = getDefaultTrainerHyperparams(args.trainer)
+if not (args.lr is None):
+    trainerHyperparams['learning_rate'] = float(args.lr)
+
 trainer = gluon.Trainer(parser_params, args.trainer,
                         getDefaultTrainerHyperparams(args.trainer))
+
 if args.loss == "ce":
     loss = gluon.loss.SoftmaxCrossEntropyLoss()
 else:
@@ -183,20 +187,23 @@ for epoch in range(1, 1000+1):
                 deprel_L = deprel_L + loss(deprel_f, deprel_tag[i])
             total_L = total_L + L + deprel_L
 
+        acc_accu += (mx.nd.array(model_gt)==mx.nd.array(model_pred)).sum().asscalar()
+        acc_total += len(model_pred)
+        avg_loss += L.asscalar()
+        avg_deprel_loss += deprel_L.asscalar() 
+
         if (seni + 1) % config.UPDATE_STEP == 0:
+            with autograd.record():
+                total_L = total_L / config.UPDATE_STEP
             total_L.backward()
             trainer.step(1)
             L = mx.nd.zeros(1, ctx=ctx) 
             deprel_L = mx.nd.zeros(1, ctx=ctx) 
             total_L = mx.nd.zeros(1, ctx=ctx)            
         
-        acc_accu += (mx.nd.array(model_gt)==mx.nd.array(model_pred)).sum().asscalar()
-        acc_total += len(model_pred)
-        avg_loss += L.asscalar() / len(model_output)
-        avg_deprel_loss += deprel_L.asscalar() / len(model_output)
         if seni % config.prompt_inteval == config.prompt_inteval - 1:
-            avg_loss /= config.prompt_inteval
-            avg_deprel_loss /= config.prompt_inteval
+            avg_loss /= acc_total
+            avg_deprel_loss /= acc_total
             acc = acc_accu / acc_total
             logging.info("Epoch {} sen {} loss={:.6} deprel_loss={:.6} train acc={:.6}".format(epoch, seni, avg_loss, avg_deprel_loss, acc))
             avg_loss = 0

@@ -157,7 +157,6 @@ for seni in tqdm(range(len(data))):
     las += getLAS(heads_pred, deprel_pred, sen, deprel_map, POS_OF_PUNCT)
     pos_pred = mx.nd.argmax(pos_f, axis=1)
     pos_acc += (pos_pred == mx.nd.array(pos_tag, ctx=ctx)).sum().asscalar() -1 # remove root
-    
 
     # accumulating statistics
     acc += (mx.nd.array(pred) == mx.nd.array(tags)).sum().asscalar()

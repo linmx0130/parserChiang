@@ -268,8 +268,9 @@ def getDefaultTrainerHyperparams(trainer_name):
     """
     Get default trainer by trainer name
     """
-    ret = {'adam': {'learning_rate':0.001, 'wd': 1e-4},
-           'adagrad': {'learning_rate':0.04, 'wd': 1e-4},
-           'sgd': {'learning_rate': 0.0001, 'wd': 1e-4, 'momentum': 0.9}
+    ret = {'adam': {'learning_rate':0.001, 'wd': 1e-5, 'clip_gradient': 1.0},
+           'rmsprop': {'learning_rate':0.001, 'wd': 1e-4, 'clip_gradient': 1.0},
+           'adagrad': {'learning_rate':0.04, 'wd': 1e-4, 'clip_gradient': 1.0},
+           'sgd': {'learning_rate': 0.001, 'wd': 1e-4, 'momentum': 0.9, 'clip_gradient': 1.0}
            }
     return ret[trainer_name]

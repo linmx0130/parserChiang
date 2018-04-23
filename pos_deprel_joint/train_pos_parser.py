@@ -93,7 +93,7 @@ logging.info("Trainer: {}, Hyperparameters: {}".format(args.trainer, trainerHype
 if args.loss == "ce":
     loss = gluon.loss.SoftmaxCrossEntropyLoss()
 if args.loss == "maxmargin":
-    loss = max_margin_loss
+    loss = lambda data, label: max_margin_loss(data, label, l2reg=4e-5)
 
 for epoch in range(1, 1000+1):
     random.shuffle(data)
@@ -197,27 +197,28 @@ for epoch in range(1, 1000+1):
                 deprel_L = deprel_L + loss(deprel_f, deprel_tag[i])
             total_L = total_L + L + pos_loss + deprel_L
 
+        acc_accu += (mx.nd.array(model_gt)==mx.nd.array(model_pred)).sum().asscalar()
+        acc_total += len(model_pred)
+        avg_loss += L.asscalar() 
+        avg_pos_loss += pos_loss.asscalar() 
+        avg_deprel_loss += deprel_L.asscalar()
+    
         if (seni + 1) % config.UPDATE_STEP == 0:
+            with autograd.record():
+                total_L = total_L / config.UPDATE_STEP
             total_L.backward()
             trainer.step(1)
             L = mx.nd.zeros(1, ctx=ctx) 
             pos_loss = mx.nd.zeros(1, ctx=ctx)
             deprel_L = mx.nd.zeros(1, ctx=ctx)
             total_L = mx.nd.zeros(1, ctx=ctx)
-        
-        acc_accu += (mx.nd.array(model_gt)==mx.nd.array(model_pred)).sum().asscalar()
-        acc_total += len(model_pred)
-        avg_loss += L.asscalar() / len(model_output)
-        avg_pos_loss += pos_loss.asscalar() / len(pos_tag)
-        avg_deprel_loss += deprel_L.asscalar() / (len(head_of_tokens) - 1)
-
+     
         if seni % config.prompt_inteval == config.prompt_inteval - 1:
-            avg_loss /= config.prompt_inteval * config.UPDATE_STEP
-            avg_pos_loss /= config.prompt_inteval * config.UPDATE_STEP
-            avg_deprel_loss /= config.prompt_inteval * config.UPDATE_STEP
+            avg_loss /= acc_total
+            avg_pos_loss /= acc_total
+            avg_deprel_loss /= acc_total
             acc = acc_accu / acc_total
             logging.info("Epoch {} sen {} POS loss={:.6} Dep loss={:.6} loss={:.6} train acc={:.6}".format(epoch, seni, avg_pos_loss, avg_deprel_loss, avg_loss, acc))
-
             avg_loss = 0
             acc_accu = 0
             acc_total = 0
