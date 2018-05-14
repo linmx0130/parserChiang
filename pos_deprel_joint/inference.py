@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 # 
-# test_parser.py
-# a basic lstm transition-based parser. testing code.
-# copyright 2017 mengxiao lin <linmx0130@gmail.com>
+# inference.py
+# A basic lstm transition-based parser. Inference code.
+# Copyright 2018 Mengxiao Lin <linmx0130@gmail.com>
 #
 
 import config
@@ -18,35 +18,46 @@ import os
 import argparse
 from tqdm import tqdm
 
-args_parser = testerArgumentParser()
+args_parser = inferencerArgumentParser()
 args = args_parser.parse_args()
 
-current_time = init_logging("test")
+current_time = init_logging("inference")
 model_dump_path = args.model_path
 
-data = ud_dataloader.parseDocument(dev_data_fn)
-data = [t for t in data if cross_check(t.tokens)] #and len(t) > 4]
-# data lowerize
-POS_OF_PUNCT = set()
-POS_OF_PUNCT.add(config.PUNC_POS_TAG)
+if args.input_format == 'ud':
+    data = ud_dataloader.parseDocument(args.input_file)
+    data = [t for t in data if cross_check(t.tokens)]
+elif args.input_format == 'raw':
+    # Use NLTK to tokenize data
+    data = ud_dataloader.nltkParseDocument(args.input_file)
+
+writer = ud_dataloader.UDWriter(args.inference_to)
+
 for sen in data:
     for token in sen.tokens:
         token.form = token.form.lower()
-    if args.use_x_pos:
-        POS_OF_PUNCT = POS_OF_PUNCT.union(ud_dataloader.get_x_pos_of_punct(sen, punct_tag=config.PUNC_POS_TAG))
-        ud_dataloader.mask_pos_with_x(sen)
+
+def inverse_map(input_map):
+    ret = {}
+    for k in input_map:
+        ret[input_map[k]] = k
+    return ret
 
 # load word map
 with open(os.path.join(model_dump_path, 'word_map.pkl'), 'rb') as f:
     word_map = pickle.load(f)
     pos_map = pickle.load(f)
     deprel_map = pickle.load(f)
+inv_word_map = inverse_map(word_map)
+inv_pos_map = inverse_map(pos_map)
+inv_deprel_map = inverse_map(deprel_map)
 
-logging.info("Test data loaded: {}".format(dev_data_fn))
+logging.info("Input data loaded: {}".format(args.input_file))
 logging.info("Sentences count = {}".format(len(data)))
 logging.info("Words count = {}".format(len(word_map)))
 logging.info("POS Tag count = {}".format(len(pos_map)))
 logging.info("Dependent Relation count = {}".format(len(deprel_map)))
+logging.info("Inference output = {}".format(args.inference_to))
 
 if args.use_cpu:
     ctx = mx.cpu(0)
@@ -62,26 +73,13 @@ zero_const = mx.nd.zeros(shape=config.NUM_HIDDEN * 2, ctx=ctx)
 
 # eval
 print("Evaluating...")
-acc = 0
-total_tags = 0
-model_acc = 0
-model_total_tags = 0
-uas = 0
-las = 0
-total_tokens = 0
-pos_acc = 0
 
 for seni in tqdm(range(len(data))):
     sen = data[seni]
     tokens_cpu = mapTokenToId(sen, word_map)
     tokens = mx.nd.array(tokens_cpu, ctx)
-    pos_tag = mapPosTagToId(sen, pos_map)
-    deprel_tag_cpu = mapDeprelTagToId(sen, deprel_map)
-    deprel_tag = mx.nd.array(deprel_tag_cpu, ctx)
-    tags = mapTransTagToId(sen)
     
     model_output = []
-    model_gt = []
     model_pred = []
     buf_idx = 0
     stack = []
@@ -128,7 +126,6 @@ for seni in tqdm(range(len(data))):
                 pred_action = output[0].argmax(axis=0).asscalar()
             pred_action = int(pred_action)
             pred.append(pred_action)
-            model_gt.append(tags[current_idx])
             model_pred.append(pred_action)
 
             current_tag = pred_action
@@ -145,7 +142,6 @@ for seni in tqdm(range(len(data))):
                 s1 = stack.pop()
                 stack.append(s1)
             current_idx += 1
-        assert current_idx == len(tags)
     heads_pred = reconstrut_tree_with_transition_labels(sen, pred)
     deprel_pred = [deprel_map[None], ] # [ROOT] does not have head
     # get relation label
@@ -153,17 +149,13 @@ for seni in tqdm(range(len(data))):
         deprel_f = mx.nd.concat(f[i], f[heads_pred[i]], dim=0).reshape((1, -1))
         deprel_f = parserModel.deprel_pred(deprel_f)
         deprel_pred.append(int(deprel_f[0].argmax(axis=0).asscalar()))
-    uas += getUAS(heads_pred, sen, POS_OF_PUNCT)
-    las += getLAS(heads_pred, deprel_pred, sen, deprel_map, POS_OF_PUNCT)
-    pos_pred = mx.nd.argmax(pos_f, axis=1)
-    pos_acc += (pos_pred == mx.nd.array(pos_tag, ctx=ctx)).sum().asscalar() -1 # remove root
+    pos_pred = mx.nd.argmax(pos_f, axis=1).astype('int')
+    for i in range(len(sen)):
+        sen.tokens[i].pos_tag = inv_pos_map[pos_pred[i].asscalar()]
+        sen.tokens[i].x_pos_tag = inv_pos_map[pos_pred[i].asscalar()]
+        sen.tokens[i].head = heads_pred[i]
+        sen.tokens[i].deprel = inv_deprel_map[deprel_pred[i]]
+    writer.write_sentence(sen)
 
-    # accumulating statistics
-    acc += (mx.nd.array(pred) == mx.nd.array(tags)).sum().asscalar()
-    model_acc += (mx.nd.array(model_gt) == mx.nd.array(model_pred)).sum().asscalar()
-    total_tags += len(tags)
-    model_total_tags += len(model_gt)
-    total_tokens += len(heads_pred) -1 
-
-logging.info("Evaling: Pred acc={:.6} Model acc={:.6} UAS={:.6} LAS={:.6} POS acc={:.6}".format(acc/total_tags, model_acc/model_total_tags, uas/total_tokens, las/total_tokens, pos_acc/total_tokens))
+writer.close()
 logging.shutdown()

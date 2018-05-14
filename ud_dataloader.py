@@ -7,16 +7,16 @@
 import hashlib
 
 class UDToken:
-    wid = None
-    form = None
-    lemma = None
-    pos_tag = None
-    x_pos_tag = None
-    feats = None
+    wid = "_"
+    form = "_"
+    lemma = "_"
+    pos_tag = "_"
+    x_pos_tag = "_"
+    feats = "_"
     head = -1
-    deprel = None
-    deps = None
-    misc = None
+    deprel = "_"
+    deps = "_"
+    misc = "_"
     def __init__(self, data_str=""):
         if len(data_str)==0:
             self.wid = 0
@@ -55,24 +55,29 @@ class UDSentence:
     text = None
     error_found = True
     tokens = None
-    def __init__(self, lines):
-        self.parseLines(lines)
-    
+    def __init__(self, lines=None):
+        if lines is not None:
+            self.parseLines(lines)
+
     def parseLines(self, lines):
         lines = [t for t in lines if not t.startswith('#')]
         # self.sent_id = lines[0].split('=')[1].strip()
         # self.text = lines[1].split('=')[1].strip()
-        self.tokens = [UDToken()]
+        tokens = [UDToken()]
         try:
             for t in lines:
                 try:
-                    self.tokens.append(UDToken(t))
+                    tokens.append(UDToken(t))
                 except ValueError:
                     pass
         except Exception as e:
             print("Parsing error at {}: {}".format(self.text, str(e)))
             self.error_found = True
             return
+        self.set_token_list(tokens)
+
+    def set_token_list(self, tokens):
+        self.tokens = tokens
         self.error_found = False
         self.text = " ".join([t.form for t in self.tokens])
         self.sent_id = hashlib.sha1(self.text.encode()).hexdigest()
@@ -106,6 +111,28 @@ def parseDocument(filename):
     ret = list(filter(lambda x:not x.error_found, ret))
     return ret
 
+def nltkParseDocument(filename):
+    import nltk
+    nltk.download('punkt')
+    ret = []
+    with open(filename) as f:
+        data = [t.strip() for t in f.readlines()]
+    for sen in data:
+        tokens_str = nltk.word_tokenize(sen)
+        ud_tokens = [UDToken()]
+        for wid, item in enumerate(tokens_str):
+            token = UDToken()
+            token.wid = wid + 1
+            token.form = item 
+            token.lemma = item
+            token.pos_tag = None
+            token.x_pos_tag = None
+            ud_tokens.append(token)
+        ud_sen = UDSentence()
+        ud_sen.set_token_list(ud_tokens)
+        ret.append(ud_sen)
+    return ret
+
 def mask_pos_with_x(sen: UDSentence):
     for x in sen.tokens:
         x.pos_tag = x.x_pos_tag
@@ -117,3 +144,21 @@ def get_x_pos_of_punct(sen: UDSentence, punct_tag=None):
             ret.add(x.x_pos_tag)
     return ret
 
+
+class UDWriter:
+    def __init__(self, filename:str):
+        self._handle = open(filename, 'w')
+    def write_token(self, token: UDToken):
+        output_line = "%d\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s\n"%(
+                token.wid, token.form, token.lemma, token.pos_tag,
+                token.x_pos_tag, token.feats, token.head, 
+                token.deprel, token.deps, token.misc)
+        self._handle.write(output_line)
+
+    def write_sentence(self, sentence: UDSentence):
+        for token in sentence.tokens[1:]:
+            self.write_token(token)
+        self._handle.write("\n")
+
+    def close(self):
+        self._handle.close()

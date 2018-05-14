@@ -264,6 +264,26 @@ def testerArgumentParser():
             help='Use the POS tagging specified by the language. Or X-POS Tag.')
     return parser
 
+def inferencerArgumentParser():
+    """
+    inferencer default argument parser generator 
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('model_path', 
+                        help="The directory stored model files and word map files.")
+    parser.add_argument('model_file', help="Model file name.")
+    parser.add_argument('input_file', help='Input data file')
+    parser.add_argument('inference_to',
+            help='Output inference result to a CoNLL-U file.')
+    parser.add_argument('--input_format', help='Choose the input file format.', 
+                        dest='input_format', default='raw', choices=['raw', 'ud'])
+    parser.add_argument('--cpu', help='Use CPU to run the model.', 
+                        dest='use_cpu', default=False, action='store_true')
+    parser.add_argument('--use_x_pos', dest='use_x_pos', default=False,
+            action='store_true',
+            help='Use the POS tagging specified by the language. Or X-POS Tag.')
+    return parser
+
 def getDefaultTrainerHyperparams(trainer_name):
     """
     Get default trainer by trainer name
