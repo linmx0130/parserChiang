@@ -143,7 +143,7 @@ for seni in tqdm(range(len(data))):
                 stack.append(s1)
             current_idx += 1
     heads_pred = reconstrut_tree_with_transition_labels(sen, pred)
-    deprel_pred = [deprel_map[None], ] # [ROOT] does not have head
+    deprel_pred = [deprel_map["_"], ] # [ROOT] does not have head
     # get relation label
     for i in range(1, len(tokens_cpu)):
         deprel_f = mx.nd.concat(f[i], f[heads_pred[i]], dim=0).reshape((1, -1))
