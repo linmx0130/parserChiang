@@ -104,7 +104,7 @@ def parseDocument(filename):
                 data_by_sentences.append(sentence_pd)
                 sentence_pd = []
     if len(sentence_pd) > 0:
-        data_by_sentences.append(ret)
+        data_by_sentences.append(sentence_pd)
     ret = []
     for sentence_chunk in data_by_sentences:
         ret.append(UDSentence(sentence_chunk))
