@@ -29,6 +29,8 @@ model_dump_path = 'model_dumps_{}{:02}{:02}_{:02}_{:02}_{:02}/'.format(
         current_time.tm_hour,
         current_time.tm_min,
         current_time.tm_sec)
+if args.model_dump_path is not None:
+    model_dump_path = args.model_dump_path
 
 if not os.path.exists(model_dump_path):
     os.mkdir(model_dump_path)
@@ -57,6 +59,12 @@ deprel_map = {}
 for i, w in enumerate(deprel_list):
     deprel_map[w] = i
 
+if args.model_name is not None:
+    with open(os.path.join(model_dump_path, 'word_map.pkl'), 'rb') as f:
+        word_map = pickle.load(f)
+        pos_map = pickle.load(f)
+        deprel_map = pickle.load(f)
+
 with open(os.path.join(model_dump_path, 'word_map.pkl'),'wb') as f:
     pickle.dump(word_map, f)
     pickle.dump(pos_map, f)
@@ -73,9 +81,15 @@ if args.use_cpu:
     ctx = mx.cpu(0)
 else:
     ctx = mx.gpu(0)
-parserModel = ParserModel(len(word_list), config.NUM_EMBED, config.NUM_HIDDEN, len(pos_list), config.TAG_EMBED, len(deprel_map))
+parserModel = ParserModel(len(word_map), config.NUM_EMBED, config.NUM_HIDDEN, len(pos_map), config.TAG_EMBED, len(deprel_map))
 parser_params = parserModel.collect_params()
-parser_params.initialize(mx.init.Xavier(), ctx=ctx)
+if args.model_name:
+    model_file_name = os.path.join(model_dump_path, args.model_name)
+    parserModel.load_params(model_file_name, ctx=ctx)
+    logging.info("Model loaded: {}".format(model_file_name))
+else:
+    parser_params.initialize(mx.init.Xavier(), ctx=ctx)
+
 if args.wordvec is not None:
     logging.info("Loading wordvec from {}".format(args.wordvec))
     setEmbeddingWithWordvec(parserModel.embed, word_map, args.wordvec)
@@ -94,8 +108,15 @@ if args.loss == "ce":
     loss = gluon.loss.SoftmaxCrossEntropyLoss()
 if args.loss == "maxmargin":
     loss = lambda data, label: max_margin_loss(data, label)
+try:
+    if args.model_name[:5] == 'epoch':
+        itr_num = int(args.model_name.split('-')[1].split('.')[0])
+    else:
+        itr_num = 0
+except Exception:
+    itr_num = 0
 
-for epoch in range(1, 1000+1):
+for epoch in range(itr_num + 1, 1000+1):
     random.shuffle(data)
     avg_loss = 0.0
     avg_pos_loss = 0.0
@@ -224,6 +245,10 @@ for epoch in range(1, 1000+1):
             acc_total = 0
             avg_pos_loss = 0
             avg_deprel_loss = 0
+        if seni % config.SAVE_INTERVAL == config.SAVE_INTERVAL - 1:
+            model_file = os.path.join(model_dump_path, "epoch-{}-tmp-{}.gluonmodel".format(epoch, seni))
+            parserModel.save_params(model_file)
+            logging.info("Model dumped to {}".format(model_file))
     
     model_file = os.path.join(model_dump_path, "epoch-{}.gluonmodel".format(epoch))
     parserModel.save_params(model_file)
